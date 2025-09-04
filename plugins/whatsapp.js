@@ -3,42 +3,13 @@ const {
 	mode,
 	isAccess,
 	isBot,
-	personalDB,
+	groupDB,
 	config,
 	getJson
 } = require('../lib');
 const {
 	WA_DEFAULT_EPHEMERAL
 } = require("@whiskeysockets/baileys");
-
-
-plugin({
-  pattern: 'autostatus',
-  fromMe: mode,
-  desc: 'Auto seen WhatsApp status',
-  type: 'owner'
-}, async (message, match) => {
-  if (!await isBot(message)) {
-    return await message.send('*_Only bot owner can use this command_*');
-  }
-
-  const input = match?.trim().toLowerCase();
-  const jid = message.sender; // per-user unique JID
-
-  if (input === 'on') {
-    await personalDB(['autostatus'], { content: 'true' }, 'set', jid);
-    return await message.send('*Auto status seen is now `ON` for you*');
-  } else if (input === 'off') {
-    await personalDB(['autostatus'], { content: 'false' }, 'set', jid);
-    return await message.send('*Auto status seen is now `OFF` for you*');
-  } else {
-    const data = await personalDB(['autostatus'], {}, 'get', jid);
-    const status = data.autostatus === 'true';
-    return await message.send(
-      `*Auto Status Seen:*\nStatus: ${status ? 'ON' : 'OFF'}\n\nUse:\n• autostatus on\n• autostatus off`
-    );
-  }
-});
 
 
 plugin({

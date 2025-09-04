@@ -73,27 +73,60 @@ async function restoreSessions() {
     console.log("🌱 Syncing Database");
     await config.DATABASE.sync();
 
-    const all = await getAllSessions();
-    if (!all?.length) {
-      console.log("⚠️ No sessions found in DB to restore.");
+    const baseDir = path.join(__dirname, "sessions");
+    await fs.ensureDir(baseDir);
+
+    // 1️⃣ Get sessions from DB
+    const dbSessions = await getAllSessions();
+    const dbNumbers = dbSessions.map(s => s.number);
+
+    // 2️⃣ Get sessions from local folder
+    const folderNumbers = (await fs.readdir(baseDir)).filter(f =>
+      fs.existsSync(path.join(baseDir, f, "creds.json"))
+    );
+
+    // 3️⃣ Merge DB + Folder (avoid duplicates)
+    const allNumbers = Array.from(new Set([...dbNumbers, ...folderNumbers]));
+
+    if (!allNumbers.length) {
+      console.log("⚠️ No sessions found in DB or local folders.");
       return;
     }
 
-    console.log(`♻️ Restoring ${all.length} sessions from DB at ${new Date().toLocaleString()}...`);
+    console.log(`♻️ Restoring ${allNumbers.length} sessions at ${new Date().toLocaleString()}...`);
 
-    for (const s of all) {
+    for (const number of allNumbers) {
       try {
-        const sessionDir = path.join(__dirname, "sessions", s.number);
+        const sessionDir = path.join(baseDir, number);
         await fs.ensureDir(sessionDir);
-
-        // Write creds.json locally
         const credPath = path.join(sessionDir, "creds.json");
-        await fs.writeJSON(credPath, s.creds, { spaces: 2 });
 
-        console.log(`🔄 Restoring session for ${s.number}...`);
-        await startBot(s.number);
+        let creds;
+
+        // 4️⃣ If folder has creds.json → use it
+        if (fs.existsSync(credPath)) {
+          creds = await fs.readJSON(credPath);
+          // Update DB copy
+          await saveSession(number, creds);
+        }
+        // 5️⃣ Else if DB has creds → write it to folder
+        else {
+          const dbSession = dbSessions.find(s => s.number === number);
+          if (dbSession?.creds) {
+            creds = dbSession.creds;
+            await fs.writeJSON(credPath, creds, { spaces: 2 });
+          }
+        }
+
+        // 6️⃣ Start the bot
+        if (creds) {
+          console.log(`🔄 Restoring session for ${number}...`);
+          await startBot(number);
+        } else {
+          console.log(`⚠️ No creds found for ${number}, skipping...`);
+        }
       } catch (err) {
-        console.error(`❌ Failed restoring session for ${s.number}:`, err);
+        console.error(`❌ Failed restoring session for ${number}:`, err);
       }
     }
   } catch (err) {
@@ -205,8 +238,9 @@ app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 
   await initializeNotificationConnection();
-  await initSessions();
   await restoreSessions();
+  await initSessions();
+
 });
 
 module.exports = { notifysend };
