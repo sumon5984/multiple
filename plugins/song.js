@@ -6,7 +6,7 @@ const yts = require("yt-search");
 const axios = require("axios");
 
 plugin({
-pattern: 'video|MP4|ytv',
+pattern: 'video',
 	fromMe: mode,
 	desc: 'Search and download a song from YouTube as video',
 	react: "🎵",
@@ -50,7 +50,7 @@ pattern: 'video|MP4|ytv',
 
 // New audio download command
 plugin({
-pattern: 'song|yta|yt',
+pattern: 'song',
 	fromMe: mode,
 	desc: 'Search and download audio from YouTube',
 	react: "🎧",

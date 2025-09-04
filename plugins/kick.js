@@ -11,9 +11,9 @@ plugin({
 if (!await isBot(message)) {
 		return await message.send('*_Only bot owner can use this command_*');
 	}
-    if (!await isBotAdmin(message)) return await message.send('_bot must be admin first_', {
+    /*if (!await isBotAdmin(message)) return await message.send('_bot must be admin first_', {
 		linkPreview: linkPreview()
-	})
+	})*/
     if (match.toLowerCase() === "all") {
         let totalKicked = await kickAllMembers(message);
         return await message.send(`✅ Kick All Completed.\n👢 Total kicked: *${totalKicked}*`);

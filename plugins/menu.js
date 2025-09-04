@@ -1,5 +1,3 @@
-
-
 const { plugin, commands, mode } = require('../lib');
 const { BOT_INFO, PREFIX }  = require('../config');
 const { version }   = require('../package.json');
