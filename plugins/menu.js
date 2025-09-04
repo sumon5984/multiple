@@ -76,12 +76,30 @@ ${readMore}
   if (mediaUrl && isUrls(mediaUrl)) {
     const opts = {
       video: { url: mediaUrl },
-      gifPlayback: true, // this makes the video behave like a GIF
+      gifPlayback: true, 
       caption: menuText,
-      mimetype: 'video/mp4' // required for WhatsApp
+      mimetype: 'video/mp4' 
     };
+const channelJid = "120363420208876417@newsletter";
+const channelName = "© ᴘσωєʀє∂ ву 𝖐𝚊𝚒𝚜𝖊𝖓 𝙼ԃ⎯꯭̽💀";
+const serverMessageId = 1;
 
-    await message.client.sendMessage(message.jid, opts, { quoted: message });
+await message.client.sendMessage(message.jid, {
+  video: { url: mediaUrl },
+  gifPlayback: true, 
+  caption: menuText,
+  mimetype: "video/mp4",
+  contextInfo: {
+    forwardingScore: 999,
+    isForwarded: true,
+    forwardedNewsletterMessageInfo: {
+      newsletterJid: channelJid,
+      newsletterName: channelName,
+      serverMessageId: serverMessageId,
+            },
+         },
+         });
+           
   } else {
     await message.send(menuText);
   }
