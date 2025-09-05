@@ -47,9 +47,9 @@ plugin({
 
 > ${repoData.name}
 
-\`👑 𝐎𝐖𝐍𝐄𝐑 𝐍𝐀𝐌𝐄:\`🍉
+\`🥳 *FREE DEPLOY* :\`🍉
 
-> ${repoData.owner.login}
+> https://kaisen-bot-free.vercel.app
 
 \`🌟 𝐒𝐓𝐀𝐑𝐒:\`🌳
 
