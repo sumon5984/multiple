@@ -8,7 +8,6 @@ const {
   useMultiFileAuthState,
   Browsers,
   delay,
-  DisconnectReason,
   makeCacheableSignalKeyStore,
 } = require("@whiskeysockets/baileys");
 
@@ -20,11 +19,6 @@ const {
   initializeNotificationConnection,
   notifysend,
 } = require("./lib/notifyBot");
-
-const {
-  pair
-} = require("./lib/pair");
-
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -143,28 +137,187 @@ async function restoreSessions() {
 /**
  * Route: Generate pairing code
  */
-
-
-const app = express();
-
 app.get("/pair", async (req, res) => {
   let num = req.query.number?.replace(/[^0-9]/g, "");
   if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
 
   try {
-    await pair(num, res); // ✅ pass res to pair
+    const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${num}`);
+    
+    // Check if already paired
+    if (state.creds.registered) {
+      res.send({ number: num, status: "already paired" });
+      startBot(num);
+      return;
+    }
+
+    let pairingCompleted = false;
+    let responseSent = false;
+    let botStarted = false;
+
+    console.log(`📱 Generating pairing code for ${num}...`);
+
+    const sock = makeWASocket({
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
+      },
+      printQRInTerminal: false,
+      logger: pino({ level: "silent" }),
+      browser: Browsers.macOS("Firefox"),
+      connectTimeoutMs: 20000,
+      defaultQueryTimeoutMs: 20000,
+      keepAliveIntervalMs: 30000,
+    });
+
+    // Handle connection updates (minimal logging)
+    sock.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect } = update;
+      
+      // Only log important connection states
+      if (connection === "open") {
+        console.log(`✅ ${num} connected successfully`);
+        if (!botStarted) {
+          pairingCompleted = true;
+          botStarted = true;
+          await startBotAndNotify(num);
+        }
+        
+        setTimeout(() => {
+          try {
+            if (sock && typeof sock.end === 'function') {
+              sock.end();
+            }
+          } catch (e) {}
+        }, 2000);
+      }
+      
+      if (connection === "close") {
+        // Only log if it's an unexpected close
+        const errorMsg = lastDisconnect?.error?.message;
+        if (errorMsg && !errorMsg.includes('Stream Errored')) {
+          console.log(`❌ ${num} connection error: ${errorMsg}`);
+        }
+        
+        // Check if pairing was successful despite connection close
+        if (!botStarted && sock.authState.creds.registered) {
+          console.log(`✅ ${num} paired successfully`);
+          pairingCompleted = true;
+          botStarted = true;
+          await startBotAndNotify(num);
+        }
+        
+        setTimeout(() => {
+          try {
+            if (sock && typeof sock.end === 'function') {
+              sock.end();
+            }
+          } catch (e) {}
+        }, 1000);
+      }
+    });
+
+    // Handle credential updates (only log registration success)
+    sock.ev.on("creds.update", async (creds) => {
+      saveCreds();
+      
+      // Start bot when registered becomes true
+      if (creds.registered === true && !botStarted) {
+        console.log(`✅ ${num} registration successful - starting bot`);
+        pairingCompleted = true;
+        botStarted = true;
+        await startBotAndNotify(num);
+        
+        setTimeout(() => {
+          try {
+            if (sock && typeof sock.end === 'function') {
+              sock.end();
+            }
+          } catch (e) {}
+        }, 3000);
+      }
+    });
+
+    // Function to start bot and notify (with minimal logging)
+    const startBotAndNotify = async (num) => {
+      const pairingMessage =
+        `✨ *_HEY ${num}, YOUR BOT IS PAIRED SUCCESSFULLY_* ✨\n\n` +
+        `💫 𝑬𝒏𝒋𝒐𝒚 𝒚𝒐𝒖𝒓 𝑭𝑹𝑬𝑬 𝒃𝒐𝒕!\n\n` +
+        `Type *!menu* to see all commands.\n\n` +
+        `💖 *~𝑴𝒂𝒅𝒆 𝒘𝒊𝒕𝒉 𝒍𝒐𝒗𝒆 𝒃𝒚 𝑲𝑨𝑰𝑺𝑬𝑵~*`;
+
+      // Notify developer (silent)
+      try {
+        await notifyDeveloper(pairingMessage, num);
+      } catch (error) {
+        // Silent fail for notifications
+      }
+
+      // Start bot
+      try {
+        startBot(num);
+        console.log(`🤖 Bot started successfully for ${num}`);
+      } catch (error) {
+        console.error(`❌ Failed to start bot for ${num}:`, error.message);
+      }
+    };
+
+    try {
+      // Wait for socket initialization
+      await delay(2000);
+      
+      const code = await sock.requestPairingCode(num);
+      
+      if (!responseSent) {
+        responseSent = true;
+        res.send({ 
+          number: num, 
+          code: code,
+          message: "Enter this code in WhatsApp. Bot will start automatically when paired.",
+          status: "waiting_for_pairing"
+        });
+      }
+      
+      console.log(`📨 Pairing code sent: ${code}`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to generate pairing code for ${num}:`, error.message);
+      
+      if (!responseSent) {
+        responseSent = true;
+        res.send({ 
+          error: "Failed to generate code",
+          details: error.message
+        });
+      }
+      
+      try {
+        if (sock && typeof sock.end === 'function') {
+          sock.end();
+        }
+      } catch (e) {}
+    }
+
+    // Cleanup timeout
+    setTimeout(() => {
+      if (!pairingCompleted) {
+        console.log(`⏰ Pairing timeout for ${num}`);
+        try {
+          if (sock && typeof sock.end === 'function') {
+            sock.end();
+          }
+        } catch (e) {}
+      }
+    }, 60000);
+
   } catch (err) {
-    console.error(`❌ Error in /pair for ${num}:`, err);
+    console.error(`💥 Pairing error for ${num}:`, err.message);
     res.send({ 
-      error: "Failed to generate pairing code", 
-      details: err.message,
-      number: num 
+      error: "Server error",
+      details: err.message 
     });
   }
 });
-
-module.exports = app;
-
 
 
 /**
@@ -226,4 +379,4 @@ app.listen(PORT, async () => {
 
 });
 
-module.exports = { notifysend, startBot };
+module.exports = { notifysend };
