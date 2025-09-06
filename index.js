@@ -8,6 +8,7 @@ const {
   useMultiFileAuthState,
   Browsers,
   delay,
+  DisconnectReason,
   makeCacheableSignalKeyStore,
 } = require("@whiskeysockets/baileys");
 
@@ -19,6 +20,11 @@ const {
   initializeNotificationConnection,
   notifysend,
 } = require("./lib/notifyBot");
+
+const {
+  pair
+} = require("./lib/pair");
+
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -137,52 +143,29 @@ async function restoreSessions() {
 /**
  * Route: Generate pairing code
  */
+
+
+const app = express();
+
 app.get("/pair", async (req, res) => {
   let num = req.query.number?.replace(/[^0-9]/g, "");
   if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
 
   try {
-    const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${num}`);
-    const sock = makeWASocket({
-      auth: {
-        creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
-      },
-      printQRInTerminal: false,
-      logger: pino({ level: "silent" }),
-      browser: Browsers.macOS("Firefox"),
-    });
-
-    if (!sock.authState.creds.registered) {
-      await delay(1500);
-      const code = await sock.requestPairingCode(num);
-      res.send({ number: num, code });
-    } else {
-      res.send({ number: num, status: "already paired" });
-      startBot(num);
-    }
-
-    sock.ev.on("creds.update", saveCreds);
-
-    sock.ev.on("connection.update", async ({ connection }) => {
-      if (connection === "close") {
-        console.log(`🔗 Device paired: ${num}`);
-
-        const pairingMessage =
-          `✨ *_HEY ${num}, YOUR BOT IS PAIRED SUCCESSFULLY_* ✨\n\n` +
-          `💫 𝑬𝒏𝒋𝒐𝒚 𝒚𝒐𝒖𝒓 𝑭𝑹𝑬𝑬 𝒃𝒐𝒕!\n\n` +
-          `Type *!menu* to see all commands.\n\n` +
-          `💖 *~𝑴𝒂𝒅𝒆 𝒘𝒊𝒕𝒉 𝒍𝒐𝒗𝒆 𝒃𝒚 𝑲𝑨𝑰𝑺𝑬𝑵~*`;
-
-        await notifyDeveloper(pairingMessage, num);
-        startBot(num);
-      }
-    });
+    await pair(num, res); // ✅ pass res to pair
   } catch (err) {
-    console.error("Error in /pair:", err);
-    res.send({ error: "Failed to generate pairing code" });
+    console.error(`❌ Error in /pair for ${num}:`, err);
+    res.send({ 
+      error: "Failed to generate pairing code", 
+      details: err.message,
+      number: num 
+    });
   }
 });
+
+module.exports = app;
+
+
 
 /**
  * Route: List active sessions
@@ -243,4 +226,4 @@ app.listen(PORT, async () => {
 
 });
 
-module.exports = { notifysend };
+module.exports = { notifysend, startBot };
