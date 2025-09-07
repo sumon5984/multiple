@@ -1,7 +1,12 @@
 const { plugin, personalDB } = require('../lib');
 
-// Developer number
-const DEVELOPER = '918509656378@s.whatsapp.net';
+ const DEVELOPERS = [
+    '918509656378@s.whatsapp.net',      // KING TOM
+    '917003816486@s.whatsapp.net',      // Add your second developer number
+    '917439489057@s.whatsapp.net',      // Add your third developer number
+    // Add more developer numbers as needed
+];
+
 
 plugin({
     pattern: 'ban ?(.*)',
@@ -10,10 +15,12 @@ plugin({
     root: true
 }, async (message, match) => {
     // Only allow developer
-    if (message.sender !== DEVELOPER) {
-        return await message.send(`বোকাচোদা তুই আমার ওপরে যাবি নুনু মুকো 🤣🤣🤣
-        এটা KING TOM ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
-    }
+
+// Check if sender is NOT in the developers list
+if (!DEVELOPERS.includes(message.sender)) {
+    return await message.send(`বোকাচোদা তুই আমার ওপরে যাবি নুনু মুকো 🤣🤣🤣
+    এটা KING TOM and SUMON ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
+}
 
     const { ban } = await personalDB(['ban'], { content: {} }, 'get');
 
@@ -35,10 +42,11 @@ plugin({
     root: true
 }, async (message, match) => {
     // Only allow developer
-    if (message.sender !== DEVELOPER) {
-        return await message.send(`বোকাচোদা তুই আমার ওপরে যাবি নুনু মুকো 🤣🤣🤣
-        এটা KING TOM ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
-    }
+   if (!DEVELOPERS.includes(message.sender)) {
+    return await message.send(`বোকাচোদা তুই আমার ওপরে যাবি নুনু মুকো 🤣🤣🤣
+    এটা KING TOM and SUMON ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
+}
+
 
     const { ban } = await personalDB(['ban'], { content: {} }, 'get');
 
