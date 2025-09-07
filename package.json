@@ -17,7 +17,7 @@
     "@distube/ytdl-core": "^4.16.12",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "^6.7.18",
+    "@whiskeysockets/baileys": "^6.7.19",
     "awesome-phonenumber": "^2.64.0",
     "axios": "^1.10.0",
     "body-parser": "^2.2.0",
