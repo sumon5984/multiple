@@ -1,93 +1,25 @@
-# Multi-stage build for optimal performance and security
-FROM node:18-alpine AS base
+# Simple Node.js Dockerfile for WhatsApp Bot
+FROM node:latest
 
-# Install system dependencies
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    musl-dev \
-    giflib-dev \
-    pixman-dev \
-    pangomm-dev \
-    libjpeg-turbo-dev \
-    freetype-dev
+# Install basic dependencies for Baileys
+RUN apt-get update && apt-get install -y python3 build-essential && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Configure npm for better performance and security
-RUN npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm config set legacy-peer-deps true
+# Fix peer dependency issue with jimp
+ENV NPM_CONFIG_LEGACY_PEER_DEPS=true
 
-# Development stage
-FROM base AS development
-ENV NODE_ENV=development
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --include=dev --legacy-peer-deps
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
-# Production dependencies stage
-FROM base AS prod-deps
-ENV NODE_ENV=production
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production --legacy-peer-deps && \
-    npm cache clean --force
-
-# Build stage
-FROM development AS build
+# Copy bot code
 COPY . .
-RUN npm run build 2>/dev/null || echo "No build script found, skipping..."
 
-# Production stage
-FROM node:18-alpine AS production
-
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-# Install only runtime dependencies
-RUN apk add --no-cache \
-    cairo \
-    jpeg \
-    pango \
-    musl \
-    giflib \
-    pixman \
-    pangomm \
-    libjpeg-turbo \
-    freetype \
-    curl \
-    dumb-init
-
-WORKDIR /app
-
-# Copy production dependencies
-COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=build --chown=nextjs:nodejs /app .
-
-# Set proper permissions
-RUN chown -R nextjs:nodejs /app
-USER nextjs
-
-# Environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
-
-# Expose port
+# Expose port (if your bot has a web interface)
 EXPOSE 3000
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
-# Start application
+# Start the bot
 CMD ["npm", "start"]
