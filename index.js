@@ -327,6 +327,7 @@ async function connector(Num, res) {
     if (!fs.existsSync(sessionDir)) {
         fs.mkdirSync(sessionDir);
     }*/
+   let responseSent = false;
    var { state, saveCreds } = await useMultiFileAuthState(`./sessions/${Num}`);
 
    const session = makeWASocket({
