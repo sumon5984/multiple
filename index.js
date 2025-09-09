@@ -9,6 +9,7 @@ const {
   Browsers,
   delay,
   makeCacheableSignalKeyStore,
+  DisconnectReason,
 } = require("@whiskeysockets/baileys");
 
 const { initSessions, saveSession, getAllSessions, deleteSession } = require("./lib");
@@ -136,7 +137,7 @@ async function restoreSessions() {
 
 /**
  * Route: Generate pairing code
- */
+ *//*
 app.get("/pair", async (req, res) => {
   let num = req.query.number?.replace(/[^0-9]/g, "");
   if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
@@ -318,7 +319,102 @@ app.get("/pair", async (req, res) => {
     });
   }
 });
+*/
 
+
+async function connector(Num, res) {
+  /*  var sessionDir = './session';
+    if (!fs.existsSync(sessionDir)) {
+        fs.mkdirSync(sessionDir);
+    }*/
+   var { state, saveCreds } = await useMultiFileAuthState(`./sessions/${Num}`);
+
+   const session = makeWASocket({
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }).child({ level: 'fatal' }))
+        },
+      //  printQRInTerminal: false,
+        logger: pino({ level: 'fatal' }).child({ level: 'fatal' }),
+        browser: Browsers.macOS("Safari"), //check docs for more custom options
+        markOnlineOnConnect: true //true or false yoour choice
+    });
+
+    if (!session.authState.creds.registered) {
+        await delay(1500);
+      //  num = num.replace(/[^0-9]/g, '');
+        var code = await session.requestPairingCode(Num);
+        if (!res.headersSent) {
+            res.send({ code: code?.match(/.{1,4}/g)?.join('-') });
+        }
+    }
+
+    session.ev.on('creds.update', async () => {
+        await saveCreds();
+    });
+
+    session.ev.on('connection.update', async (update) => {
+        var { connection, lastDisconnect } = update;
+        if (connection === 'open') {
+            console.log('Connected successfully');
+            await delay(5000);
+
+
+
+
+
+          
+        } else if (connection === 'close') {
+            var reason = lastDisconnect?.error?.output?.statusCode;
+            reconn(reason);
+        }
+    });
+}
+
+function reconn(reason) {
+    if ([DisconnectReason.connectionLost, DisconnectReason.connectionClosed, DisconnectReason.restartRequired].includes(reason)) {
+        console.log('Connection lost, reconnecting...');
+        connector();
+    } else {
+        console.log(`Disconnected! reason: ${reason}`);
+        session.end();
+    }
+}
+/*
+app.get('/pair', async (req, res) => {
+    var Num = req.query.code;
+    if (!Num) {
+        return res.status(418).json({ message: 'Phone number is required' });
+    }
+
+  //you can remove mutex if you dont want to queue the requests
+    var release = await mutex.acquire();
+    try {
+        await connector(Num, res);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "fekd up"});
+    } finally {
+        // release(); // Comment out since mutex is not implemented
+    }
+});
+*/
+
+
+
+app.get("/pair", async (req, res) => {
+  let num = req.query.number?.replace(/[^0-9]/g, "");
+  if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
+
+ try {
+        await connector(num, res);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "fekd up"});
+    } finally {
+        // release(); // Comment out since mutex is not implemented
+    }
+});
 
 /**
  * Route: List active sessions

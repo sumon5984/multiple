@@ -13,7 +13,31 @@ externalPort = 3000
 
 [[ports]]
 localPort = 8000
-externalPort = 80
+externalPort = 8000
 
 [agent]
 expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "WhatsApp Bot Server"
+
+[[workflows.workflow]]
+name = "WhatsApp Bot Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node index.js"
+waitForPort = 8000
+
+[workflows.workflow.metadata]
+outputType = "console"
