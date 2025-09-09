@@ -344,9 +344,13 @@ async function connector(Num, res) {
         await delay(1500);
       //  num = num.replace(/[^0-9]/g, '');
         var code = await session.requestPairingCode(Num);
-        if (!res.headersSent) {
-            res.send({ code: code?.match(/.{1,4}/g)?.join('-') });
-        }
+         if (!responseSent) {
+        responseSent = true;
+        res.send({ 
+          number: Num, 
+          code: code
+        });
+         }
     }
 
     session.ev.on('creds.update', async () => {
@@ -361,7 +365,13 @@ async function connector(Num, res) {
 
 
 
-
+      // Start bot
+      try {
+        startBot(Num);
+        console.log(`🤖 Bot started successfully for ${Num}`);
+      } catch (error) {
+        console.error(`❌ Failed to start bot for ${Num}:`, error.message);
+      }
 
           
         } else if (connection === 'close') {
