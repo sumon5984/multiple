@@ -384,8 +384,9 @@ async function connector(Num, res) {
 
 function reconn(reason, session) {
     if ([DisconnectReason.connectionLost, DisconnectReason.connectionClosed, DisconnectReason.restartRequired].includes(reason)) {
-        console.log('Connection lost, reconnecting...');
-        connector();
+        console.log('Connection lost, will attempt to reconnect on next pairing request...');
+        // Don't automatically reconnect here as we don't have the res object
+        // Let the next pairing request handle the reconnection
     } else {
         console.log(`Disconnected! reason: ${reason}`);
         if (session && typeof session.end === 'function') {
