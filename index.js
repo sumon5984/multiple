@@ -366,18 +366,20 @@ async function connector(Num, res) {
           
         } else if (connection === 'close') {
             var reason = lastDisconnect?.error?.output?.statusCode;
-            reconn(reason);
+            reconn(reason, session);
         }
     });
 }
 
-function reconn(reason) {
+function reconn(reason, session) {
     if ([DisconnectReason.connectionLost, DisconnectReason.connectionClosed, DisconnectReason.restartRequired].includes(reason)) {
         console.log('Connection lost, reconnecting...');
         connector();
     } else {
         console.log(`Disconnected! reason: ${reason}`);
-        session.end();
+        if (session && typeof session.end === 'function') {
+            session.end();
+        }
     }
 }
 /*
@@ -403,11 +405,11 @@ app.get('/pair', async (req, res) => {
 
 
 app.get("/pair", async (req, res) => {
-  let num = req.query.number?.replace(/[^0-9]/g, "");
-  if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
+  let Num = req.query.number?.replace(/[^0-9]/g, "");
+  if (!Num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
 
  try {
-        await connector(num, res);
+        await connector(Num, res);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: "fekd up"});
