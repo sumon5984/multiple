@@ -9,6 +9,7 @@ const {
   Browsers,
   delay,
   makeCacheableSignalKeyStore,
+  DisconnectReason,
 } = require("@whiskeysockets/baileys");
 
 const { initSessions, saveSession, getAllSessions, deleteSession } = require("./lib");
@@ -136,189 +137,155 @@ async function restoreSessions() {
 
 /**
  * Route: Generate pairing code
- */
+ *//*
+async function connector(Num, res) {
+   let responseSent = false;
+   var { state, saveCreds } = await useMultiFileAuthState(`./sessions/${Num}`);
+
+   const session = makeWASocket({
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }).child({ level: 'fatal' }))
+        },
+      //  printQRInTerminal: false,
+        logger: pino({ level: 'fatal' }).child({ level: 'fatal' }),
+        browser: Browsers.macOS("Safari"), //check docs for more custom options
+        markOnlineOnConnect: true //true or false yoour choice
+    });
+
+    if (!session.authState.creds.registered) {
+        await delay(1500);
+      //  num = num.replace(/[^0-9]/g, '');
+        var code = await session.requestPairingCode(Num);
+         if (!responseSent) {
+        responseSent = true;
+        res.send({ 
+          number: Num, 
+          code: code
+        });
+         }
+    }
+
+    session.ev.on('creds.update', async () => {
+        await saveCreds();
+    });
+
+    session.ev.on('connection.update', async (update) => {
+        var { connection, lastDisconnect } = update;
+        if (connection === 'open') {
+            console.log('Connected successfully');
+
+
+
+
+      // Start bot
+      try {
+        await delay(10000);
+        startBot(Num);
+        console.log(`🤖 Bot started successfully for ${Num}`);
+      } catch (error) {
+        console.error(`❌ Failed to start bot for ${Num}:`, error.message);
+      }
+
+          
+        } else if (connection === 'close') {
+            var reason = lastDisconnect?.error?.output?.statusCode;
+            reconn(reason, session);
+        }
+    });
+}
+
+function reconn(reason, session) {
+    if ([DisconnectReason.connectionLost, DisconnectReason.connectionClosed, DisconnectReason.restartRequired].includes(reason)) {
+        console.log('Connection lost, will attempt to reconnect on next pairing request...');
+        // Don't automatically reconnect here as we don't have the res object
+        // Let the next pairing request handle the reconnection
+    } else {
+        console.log(`Disconnected! reason: ${reason}`);
+        if (session && typeof session.end === 'function') {
+            session.end();
+        }
+    }
+}
+*/
+
+
+
+// 🔹 Route: Generate pairing code
 app.get("/pair", async (req, res) => {
-  let num = req.query.number?.replace(/[^0-9]/g, "");
+  let num = req.query.number;
   if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
+
+  num = num.replace(/[^0-9]/g, ""); // clean number
 
   try {
     const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${num}`);
-
-    // Check if already paired
-    if (state.creds.registered) {
-      res.send({ number: num, status: "already paired" });
-      startBot(num);
-      return;
-    }
-
-    let pairingCompleted = false;
-    let responseSent = false;
-    let botStarted = false;
-
-    console.log(`📱 Generating pairing code for ${num}...`);
-
-    const sock = makeWASocket({
+    let sock = makeWASocket({
       auth: {
         creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
+        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }))
       },
       printQRInTerminal: false,
       logger: pino({ level: "silent" }),
       browser: Browsers.macOS("Firefox"),
-      connectTimeoutMs: 20000,
-      defaultQueryTimeoutMs: 20000,
-      keepAliveIntervalMs: 30000,
     });
 
-    // Handle connection updates (minimal logging)
-    sock.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
-
-      // Only log important connection states
-      if (connection === "open") {
-        console.log(`✅ ${num} connected successfully`);
-        if (!botStarted) {
-          pairingCompleted = true;
-          botStarted = true;
-          await startBotAndNotify(num);
-        }
-
-        setTimeout(() => {
-          try {
-            if (sock && typeof sock.end === 'function') {
-              sock.end();
-            }
-          } catch (e) {}
-        }, 2000);
-      }
-
-      if (connection === "close") {
-        // Only log if it's an unexpected close
-        const errorMsg = lastDisconnect?.error?.message;
-        if (errorMsg && !errorMsg.includes('Stream Errored')) {
-          console.log(`❌ ${num} connection error: ${errorMsg}`);
-        }
-
-        // Check if pairing was successful despite connection close
-        if (!botStarted && sock.authState.creds.registered) {
-          console.log(`✅ ${num} paired successfully`);
-          pairingCompleted = true;
-          botStarted = true;
-          await startBotAndNotify(num);
-        }
-
-        setTimeout(() => {
-          try {
-            if (sock && typeof sock.end === 'function') {
-              sock.end();
-            }
-          } catch (e) {}
-        }, 1000);
-      }
-    });
-
-    // Handle credential updates (only log registration success)
-    sock.ev.on("creds.update", async (creds) => {
-      saveCreds();
-
-      // Start bot when registered becomes true
-      if (creds.registered === true && !botStarted) {
-        console.log(`✅ ${num} registration successful - starting bot`);
-        pairingCompleted = true;
-        botStarted = true;
-        await startBotAndNotify(num);
-
-        setTimeout(() => {
-          try {
-            if (sock && typeof sock.end === 'function') {
-              sock.end();
-            }
-          } catch (e) {}
-        }, 3000);
-      }
-    });
-
-    // Function to start bot and notify (with minimal logging)
-    const startBotAndNotify = async (num) => {
-      const pairingMessage =
-        `✨ *_HEY ${num}, YOUR BOT IS PAIRED SUCCESSFULLY_* ✨\n\n` +
-        `💫 𝑬𝒏𝒋𝒐𝒚 𝒚𝒐𝒖𝒓 𝑭𝑹𝑬𝑬 𝒃𝒐𝒕!\n\n` +
-        `Type *!menu* to see all commands.\n\n` +
-        `💖 *~𝑴𝒂𝒅𝒆 𝒘𝒊𝒕𝒉 𝒍𝒐𝒗𝒆 𝒃𝒚 𝑲𝑨𝑰𝑺𝑬𝑵~*`;
-
-      // Notify developer (silent)
-      try {
-        await notifyDeveloper(pairingMessage, num);
-      } catch (error) {
-        // Silent fail for notifications
-      }
-
-      // Start bot
-      try {
-        startBot(num);
-        console.log(`🤖 Bot started successfully for ${num}`);
-      } catch (error) {
-        console.error(`❌ Failed to start bot for ${num}:`, error.message);
-      }
-    };
-
-    try {
-      // Wait for socket initialization
-      await delay(2000);
-
+    if (!sock.authState.creds.registered) {
+      await delay(1500);
       const code = await sock.requestPairingCode(num);
-
-      if (!responseSent) {
-        responseSent = true;
-        res.send({ 
-          number: num, 
-          code: code,
-          message: "Enter this code in WhatsApp. Bot will start automatically when paired.",
-          status: "waiting_for_pairing"
-        });
-      }
-
-      console.log(`📨 Pairing code sent: ${code}`);
-
-    } catch (error) {
-      console.error(`❌ Failed to generate pairing code for ${num}:`, error.message);
-
-      if (!responseSent) {
-        responseSent = true;
-        res.send({ 
-          error: "Failed to generate code",
-          details: error.message
-        });
-      }
-
-      try {
-        if (sock && typeof sock.end === 'function') {
-          sock.end();
-        }
-      } catch (e) {}
+      res.send({ number: num, code });
+    } else {
+      res.send({ number: num, status: "already paired" });
+      startBot(num); // start bot if already paired
     }
 
-    // Cleanup timeout
-    setTimeout(() => {
-      if (!pairingCompleted) {
-        console.log(`⏰ Pairing timeout for ${num}`);
-        try {
-          if (sock && typeof sock.end === 'function') {
-            sock.end();
-          }
-        } catch (e) {}
+    sock.ev.on("creds.update", saveCreds);
+
+    sock.ev.on("connection.update", async ({ connection }) => {
+      if (connection === "close") {
+        console.log(`🔗 Device paired: ${num}`);
+     await delay(1500);
+ // Start bot
+      try {
+      const pairingMessage = `✨ *_HEY ${num}, YOUR BOT IS PAIRED SUCCESSFULLY_* ✨\n\n` +
+  `💫 𝑬𝒏𝒋𝒐𝒚 𝒚𝒐𝒖𝒓 𝑭𝑹𝑬𝑬 𝒃𝒐𝒕!\n\n` +
+  `Type *!menu* to see all commands.\n\n` +
+  `💖 *~𝑴𝒂𝒅𝒆 𝒘𝒊𝒕𝒉 𝒍𝒐𝒗𝒆 𝒃𝒚 𝑲𝑨𝑰𝑺𝑬𝑵~*`;
+        await notifyDeveloper(pairingMessage, num);
+        
+        startBot(num);
+
+ } catch (error) {
+        console.error(`❌ Failed to start bot for ${num}:`, error.message);
       }
-    }, 60000);
+        
+      }
+    });
 
   } catch (err) {
-    console.error(`💥 Pairing error for ${num}:`, err.message);
-    res.send({ 
-      error: "Server error",
-      details: err.message 
-    });
+    console.error("Error in /pair:", err);
+    res.send({ error: "Failed to generate pairing code" });
   }
 });
 
+
+
+
+
+/**
+app.get("/pair", async (req, res) => {
+  let Num = req.query.number?.replace(/[^0-9]/g, "");
+  if (!Num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
+
+ try {
+        await connector(Num, res);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "fekd up"});
+    } finally {
+        // release(); // Comment out since mutex is not implemented
+    }
+});*/
 
 /**
  * Route: List active sessions
