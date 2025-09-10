@@ -17,7 +17,7 @@ const princeVideoApi = {
     }
 };
 
-async function videoCommand(chatId, message) {
+async function videoCommand(sock,chatId, message) {
     try {
         const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
         const searchQuery = text.split(' ').slice(1).join(' ').trim();
