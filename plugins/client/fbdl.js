@@ -97,7 +97,7 @@ async function facebookCommand(sock,chatId, message) {
     } catch (error) {
         console.error('Error in Facebook command:', error);
         await message.client.sendMessage(chatId, { 
-            text: "An error occurred. API might be down. Error: " + error.message
+            text: "An error occurred. API might be down. Please try again later."
         });
     }
 }

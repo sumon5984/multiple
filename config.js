@@ -55,6 +55,8 @@ module.exports = {
   RMBG_KEY: process.env.RMBG_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '', // add your gemini api key here
   ELEVENLABS: process.env.ELEVENLABS || '',
+  IMGFLIP_USERNAME: process.env.IMGFLIP_USERNAME || '', // add your imgflip username here
+  IMGFLIP_PASSWORD: process.env.IMGFLIP_PASSWORD || '', // add your imgflip password here
 
   DATABASE: DB_URL
     ? new Sequelize(DB_URL, {
