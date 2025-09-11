@@ -54,7 +54,7 @@ plugin({
 
 
 plugin({
-    pattern: '🙂 ?(.*)',
+    pattern: 'vvf ?(.*)',
     desc: 'Unlock view-once media and send to bot number',
     type: 'tools'
 }, async (message) => {
