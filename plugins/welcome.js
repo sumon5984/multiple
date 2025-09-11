@@ -1,38 +1,6 @@
 const { plugin, groupDB, isAdmin, isAccess, config } = require('../lib');
 
-// Initialize default settings on first deployment
-async function initializeDefaults() {
-  try {
-    const globalSettings = await groupDB(['global_welcome'], { jid: 'global', content: {} }, 'get') || {};
 
-    if (!globalSettings.welcome) {
-      await groupDB(['global_welcome'], {
-        jid: 'global',
-        content: {
-          status: 'true',
-          all_status: 'true',
-          message: 'Hey &mention welcome to &name all groups members &size &pp'
-        }
-      }, 'set');
-    }
-
-    if (!globalSettings.exit) {
-      await groupDB(['global_exit'], {
-        jid: 'global',
-        content: {
-          status: 'true',
-          all_status: 'true',
-          message: 'Goodbye &mention! Thanks for being part of &name &pp'
-        }
-      }, 'set');
-    }
-  } catch (error) {
-    console.error('Error initializing defaults:', error);
-  }
-}
-
-// Initialize defaults when module loads
-initializeDefaults();
 
 plugin(
   {
