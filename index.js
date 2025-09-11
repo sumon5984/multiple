@@ -73,6 +73,58 @@ async function restoreSessions() {
   try {
     console.log("🌱 Syncing Database");
     await config.DATABASE.sync();
+    
+    // Check if new columns exist and add them if they don't
+    const queryInterface = config.DATABASE.getQueryInterface();
+    try {
+      await queryInterface.addColumn('groupDBs', 'global_welcome', {
+        type: require('sequelize').DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: JSON.stringify({
+          status: 'true',
+          all_status: 'true',
+          message: 'Hey &mention welcome to &name all groups members &size &pp'
+        })
+      });
+      console.log('✅ Added global_welcome column');
+    } catch (e) {
+      if (!e.message.includes('already exists')) {
+        console.log('global_welcome column already exists or error:', e.message);
+      }
+    }
+
+    try {
+      await queryInterface.addColumn('groupDBs', 'global_exit', {
+        type: require('sequelize').DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: JSON.stringify({
+          status: 'true',
+          all_status: 'true',
+          message: 'Goodbye &mention! Thanks for being part of &name &pp'
+        })
+      });
+      console.log('✅ Added global_exit column');
+    } catch (e) {
+      if (!e.message.includes('already exists')) {
+        console.log('global_exit column already exists or error:', e.message);
+      }
+    }
+
+    try {
+      await queryInterface.addColumn('groupDBs', 'global_pdm', {
+        type: require('sequelize').DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: JSON.stringify({
+          status: 'true',
+          all_status: 'true'
+        })
+      });
+      console.log('✅ Added global_pdm column');
+    } catch (e) {
+      if (!e.message.includes('already exists')) {
+        console.log('global_pdm column already exists or error:', e.message);
+      }
+    }
 
     const baseDir = path.join(__dirname, "sessions");
     await fs.ensureDir(baseDir);
@@ -251,7 +303,8 @@ app.listen(PORT, async () => {
   await restoreSessions();
   await initSessions();
   // Initialize defaults when module loads
-  await initializeGlobalDefaults
+  const { initializeGlobalDefaults } = require("./lib/database/group");
+  await initializeGlobalDefaults();
 
 });
 
