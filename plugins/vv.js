@@ -77,6 +77,11 @@ plugin({
      if (!botNumber) return await message.send('⚠️ Unsupported or missing view-once media.');
     }
     try {
+        // Validate that the message actually contains media before attempting download
+        if (!raw[mediaType] || mediaType === 'conversation' || mediaType === 'extendedTextMessage') {
+            return await message.send('⚠️ This message does not contain downloadable media.');
+        }
+
         const buffer = await downloadMediaMessage(
             { message: raw, key: quoted.key },
             'buffer',

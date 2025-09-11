@@ -49,7 +49,7 @@ plugin({
     }
 
     // Get non-admin users from the current group
-    const nonAdmins = await getNonAdmins(message.jid); // Pass group JID if needed
+    const nonAdmins = await getNonAdmins(message);
 
     if (!nonAdmins.includes(user)) {
         return await message.send("_❌ Can't kick an admin or bot._");
