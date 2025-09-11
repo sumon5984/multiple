@@ -1,6 +1,5 @@
+// PLUGIN CODE (welcome.js)
 const { plugin, groupDB, isAdmin, isAccess, config } = require('../lib');
-
-
 
 plugin(
   {
@@ -20,16 +19,16 @@ plugin(
     match = (match || '').trim();
 
     // Get group-specific settings
-    const { welcome } =
-      (await groupDB(['welcome'], { jid: message.jid, content: {} }, 'get')) || {};
+    const groupData = await groupDB(['welcome'], { jid: message.jid, content: {} }, 'get');
+    const groupWelcome = groupData?.welcome || {};
 
     // Get global settings
-    const { welcome: globalWelcome } =
-      (await groupDB(['global_welcome'], { jid: 'global', content: {} }, 'get')) || {};
+    const globalData = await groupDB(['global_welcome'], { jid: 'global', content: {} }, 'get');
+    const globalWelcome = globalData?.global_welcome || {};
 
-    const groupStatus = welcome?.status === 'true' ? 'true' : 'false';
-    const globalAllStatus = globalWelcome?.all_status === 'true' ? 'true' : 'false';
-    const currentMsg = welcome?.message || globalWelcome?.message || 'Hey &mention welcome to &name all groups members &size &pp';
+    const groupStatus = groupWelcome.status || 'false';
+    const globalAllStatus = globalWelcome.all_status || 'true'; // Default to true
+    const currentMsg = groupWelcome.message || globalWelcome.message || 'Hey &mention welcome to &name all groups members &size &pp';
 
     if (match.toLowerCase() === 'get') {
       const statusText = groupStatus === 'true' ? 'on' : 'off';
@@ -41,7 +40,7 @@ plugin(
         `*All Groups Status:* ${allStatusText}\n` +
         `*Message:* ${currentMsg}\n\n` +
         `_Use: welcome on/off, welcome all on/off_\n` +
-        `Visit ${config.BASE_URL}info/welcome`
+        `Visit ${config.BASE_URL || ''}info/welcome`
       );
     }
 
@@ -50,9 +49,9 @@ plugin(
       await groupDB(['global_welcome'], {
         jid: 'global',
         content: {
-          status: globalWelcome?.status || 'true',
+          status: globalWelcome.status || 'true',
           all_status: 'true',
-          message: globalWelcome?.message || 'Hey &mention welcome to &name all groups members &size &pp'
+          message: globalWelcome.message || 'Hey &mention welcome to &name all groups members &size &pp'
         }
       }, 'set');
       return await message.send('*Welcome activated for ALL groups*');
@@ -63,9 +62,9 @@ plugin(
       await groupDB(['global_welcome'], {
         jid: 'global',
         content: {
-          status: globalWelcome?.status || 'true',
+          status: globalWelcome.status || 'true',
           all_status: 'false',
-          message: globalWelcome?.message || 'Hey &mention welcome to &name all groups members &size &pp'
+          message: globalWelcome.message || 'Hey &mention welcome to &name all groups members &size &pp'
         }
       }, 'set');
       return await message.send('*Welcome deactivated for all groups (individual group settings will apply)*');
@@ -100,7 +99,7 @@ plugin(
         await groupDB(['global_welcome'], {
           jid: 'global',
           content: {
-            status: globalWelcome?.status || 'true',
+            status: globalWelcome.status || 'true',
             all_status: 'true',
             message: match
           }
@@ -139,16 +138,16 @@ plugin(
     match = (match || '').trim();
 
     // Get group-specific settings
-    const { exit } =
-      (await groupDB(['exit'], { jid: message.jid, content: {} }, 'get')) || {};
+    const groupData = await groupDB(['exit'], { jid: message.jid, content: {} }, 'get');
+    const groupExit = groupData?.exit || {};
 
     // Get global settings
-    const { exit: globalExit } =
-      (await groupDB(['global_exit'], { jid: 'global', content: {} }, 'get')) || {};
+    const globalData = await groupDB(['global_exit'], { jid: 'global', content: {} }, 'get');
+    const globalExit = globalData?.global_exit || {};
 
-    const groupStatus = exit?.status === 'true' ? 'true' : 'false';
-    const globalAllStatus = globalExit?.all_status === 'true' ? 'true' : 'false';
-    const currentMsg = exit?.message || globalExit?.message || 'Goodbye &mention! Thanks for being part of &name &pp';
+    const groupStatus = groupExit.status || 'false';
+    const globalAllStatus = globalExit.all_status || 'true'; // Default to true
+    const currentMsg = groupExit.message || globalExit.message || 'Goodbye &mention! Thanks for being part of &name &pp';
 
     if (match.toLowerCase() === 'get') {
       const statusText = groupStatus === 'true' ? 'on' : 'off';
@@ -160,7 +159,7 @@ plugin(
         `*All Groups Status:* ${allStatusText}\n` +
         `*Message:* ${currentMsg}\n\n` +
         `_Use: goodbye on/off, goodbye all on/off_\n` +
-        `Visit ${config.BASE_URL}info/exit`
+        `Visit ${config.BASE_URL || ''}info/exit`
       );
     }
 
@@ -169,9 +168,9 @@ plugin(
       await groupDB(['global_exit'], {
         jid: 'global',
         content: {
-          status: globalExit?.status || 'true',
+          status: globalExit.status || 'true',
           all_status: 'true',
-          message: globalExit?.message || 'Goodbye &mention! Thanks for being part of &name &pp'
+          message: globalExit.message || 'Goodbye &mention! Thanks for being part of &name &pp'
         }
       }, 'set');
       return await message.send('*Goodbye activated for ALL groups*');
@@ -182,9 +181,9 @@ plugin(
       await groupDB(['global_exit'], {
         jid: 'global',
         content: {
-          status: globalExit?.status || 'true',
+          status: globalExit.status || 'true',
           all_status: 'false',
-          message: globalExit?.message || 'Goodbye &mention! Thanks for being part of &name &pp'
+          message: globalExit.message || 'Goodbye &mention! Thanks for being part of &name &pp'
         }
       }, 'set');
       return await message.send('*Goodbye deactivated for all groups (individual group settings will apply)*');
@@ -219,7 +218,7 @@ plugin(
         await groupDB(['global_exit'], {
           jid: 'global',
           content: {
-            status: globalExit?.status || 'true',
+            status: globalExit.status || 'true',
             all_status: 'true',
             message: match
           }
@@ -239,4 +238,3 @@ plugin(
     );
   }
 );
-
