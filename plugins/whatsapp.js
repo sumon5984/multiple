@@ -1,11 +1,7 @@
 const {
 	plugin,
 	mode,
-	isAccess,
-	isBot,
-	groupDB,
-	config,
-	getJson
+	isBot
 } = require('../lib');
 const {
 	WA_DEFAULT_EPHEMERAL
