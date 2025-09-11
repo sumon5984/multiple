@@ -12,7 +12,7 @@ const {
   DisconnectReason,
 } = require("@whiskeysockets/baileys");
 
-const { initSessions, saveSession, getAllSessions, deleteSession } = require("./lib");
+const { initSessions, saveSession, getAllSessions, deleteSession, initializeGlobalDefaults } = require("./lib");
 const { WhatsApp } = require("./lib/client");
 const {
   notifyDeveloper,
@@ -133,84 +133,10 @@ async function restoreSessions() {
   } catch (err) {
     console.error("❌ restoreSessions() failed:", err);
   }
-}
-
+};
 /**
  * Route: Generate pairing code
- *//*
-async function connector(Num, res) {
-   let responseSent = false;
-   var { state, saveCreds } = await useMultiFileAuthState(`./sessions/${Num}`);
-
-   const session = makeWASocket({
-        auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }).child({ level: 'fatal' }))
-        },
-      //  printQRInTerminal: false,
-        logger: pino({ level: 'fatal' }).child({ level: 'fatal' }),
-        browser: Browsers.macOS("Safari"), //check docs for more custom options
-        markOnlineOnConnect: true //true or false yoour choice
-    });
-
-    if (!session.authState.creds.registered) {
-        await delay(1500);
-      //  num = num.replace(/[^0-9]/g, '');
-        var code = await session.requestPairingCode(Num);
-         if (!responseSent) {
-        responseSent = true;
-        res.send({ 
-          number: Num, 
-          code: code
-        });
-         }
-    }
-
-    session.ev.on('creds.update', async () => {
-        await saveCreds();
-    });
-
-    session.ev.on('connection.update', async (update) => {
-        var { connection, lastDisconnect } = update;
-        if (connection === 'open') {
-            console.log('Connected successfully');
-
-
-
-
-      // Start bot
-      try {
-        await delay(10000);
-        startBot(Num);
-        console.log(`🤖 Bot started successfully for ${Num}`);
-      } catch (error) {
-        console.error(`❌ Failed to start bot for ${Num}:`, error.message);
-      }
-
-          
-        } else if (connection === 'close') {
-            var reason = lastDisconnect?.error?.output?.statusCode;
-            reconn(reason, session);
-        }
-    });
-}
-
-function reconn(reason, session) {
-    if ([DisconnectReason.connectionLost, DisconnectReason.connectionClosed, DisconnectReason.restartRequired].includes(reason)) {
-        console.log('Connection lost, will attempt to reconnect on next pairing request...');
-        // Don't automatically reconnect here as we don't have the res object
-        // Let the next pairing request handle the reconnection
-    } else {
-        console.log(`Disconnected! reason: ${reason}`);
-        if (session && typeof session.end === 'function') {
-            session.end();
-        }
-    }
-}
-*/
-
-
-
+ */
 // 🔹 Route: Generate pairing code
 app.get("/pair", async (req, res) => {
   let num = req.query.number;
@@ -268,25 +194,6 @@ app.get("/pair", async (req, res) => {
   }
 });
 
-
-
-
-
-/**
-app.get("/pair", async (req, res) => {
-  let Num = req.query.number?.replace(/[^0-9]/g, "");
-  if (!Num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
-
- try {
-        await connector(Num, res);
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "fekd up"});
-    } finally {
-        // release(); // Comment out since mutex is not implemented
-    }
-});*/
-
 /**
  * Route: List active sessions
  */
@@ -340,9 +247,11 @@ app.get("/delete", async (req, res) => {
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 
-  await initializeNotificationConnection();
+ // await initializeNotificationConnection();
   await restoreSessions();
   await initSessions();
+  // Initialize defaults when module loads
+  await initializeGlobalDefaults
 
 });
 
