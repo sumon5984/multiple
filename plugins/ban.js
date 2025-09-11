@@ -3,7 +3,8 @@ const { plugin, personalDB } = require('../lib');
  const DEVELOPERS = [
     '918509656378@s.whatsapp.net',      // KING TOM
     '917003816486@s.whatsapp.net',      // Add your second developer number
-    '917439489057@s.whatsapp.net',      // Add your third developer number
+    '917439489057@s.whatsapp.net', 
+    '919749366957@s.whatsapp.net', // Add your third developer number
     // Add more developer numbers as needed
 ];
 
@@ -19,7 +20,7 @@ plugin({
 // Check if sender is NOT in the developers list
 if (!DEVELOPERS.includes(message.sender)) {
     return await message.send(`বোকাচোদা তুই আমার ওপরে যাবি নুনু মুকো 🤣🤣🤣
-    এটা KING TOM and SUMON ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
+    এটা KING TOM and SUMON and DEVELOPER ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
 }
 
     const { ban } = await personalDB(['ban'], { content: {} }, 'get');
