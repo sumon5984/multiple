@@ -6,6 +6,12 @@ plugin({
     fromMe: mode,
     desc: "Kick group member(s)"
 }, async (message, match) => {
+    // Defensive check for client property
+    if (!message.client) {
+        console.error("Kick plugin error: message.client is undefined");
+        return await message.send('_❌ Bot client error. Please try again._');
+    }
+
     if (!message.isGroup)
         return await message.reply("*_This command is for groups_*");
 
