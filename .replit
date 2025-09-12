@@ -5,7 +5,8 @@ run = "node index.js"
 channel = "stable-25_05"
 
 [deployment]
-run = ["sh", "-c", "node index.js"]
+run = ["node", "index.js"]
+deploymentTarget = "vm"
 
 [[ports]]
 localPort = 3000
