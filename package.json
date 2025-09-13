@@ -27,6 +27,7 @@
     "dotenv": "^16.0.2",
     "express": "latest",
     "file-type": "^16.5.3",
+    "firebase": "^12.2.1",
     "fluent-ffmpeg": "^2.1.2",
     "form-data": "^4.0.0",
     "fs": "^0.0.1-security",

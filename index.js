@@ -2,6 +2,8 @@ const express = require("express");
 const pino = require("pino");
 const fs = require("fs-extra");
 const path = require("path");
+const { db } = require("./lib/blockDB");
+const { ref, set, get, remove, child } = require("firebase/database");
 const config = require("./config");
 const {
   makeWASocket,
@@ -147,7 +149,48 @@ async function restoreSessions() {
   }
 }
 
-// 🔹 Route: Generate pairing code
+// 🔹 Block user
+app.get("/block", async (req, res) => {
+  let num = req.query.number;
+  if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
+
+  num = num.replace(/[^0-9]/g, "");
+  try {
+    await set(ref(db, "blocked/" + num), { blocked: true });
+    res.send({ success: true, message: `${num} blocked` });
+  } catch (err) {
+    res.send({ error: err.message });
+  }
+});
+
+// 🔹 Unblock user
+app.get("/unblock", async (req, res) => {
+  let num = req.query.number;
+  if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
+
+  num = num.replace(/[^0-9]/g, "");
+  try {
+    await remove(ref(db, "blocked/" + num));
+    res.send({ success: true, message: `${num} unblocked` });
+  } catch (err) {
+    res.send({ error: err.message });
+  }
+});
+
+// 🔹 Get blocklist
+app.get("/blocklist", async (req, res) => {
+  try {
+    const snapshot = await get(ref(db, "blocked"));
+    if (snapshot.exists()) {
+      res.send(snapshot.val());
+    } else {
+      res.send({});
+    }
+  } catch (err) {
+    res.send({ error: err.message });
+  }
+});
+// 🔹 Get pairing code
 app.get("/pair", async (req, res) => {
   let num = req.query.number;
   if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
@@ -155,6 +198,12 @@ app.get("/pair", async (req, res) => {
   num = num.replace(/[^0-9]/g, ""); // clean number
 
   try {
+    const dbRef = ref(db);
+    const snapshot = await get(child(dbRef, "blocked/" + num));
+    if (snapshot.exists()) {
+      return res.send({ error: `User ${num} is ban` });
+    }
+
     const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${num}`);
     let sock = makeWASocket({
       auth: {
@@ -179,21 +228,18 @@ app.get("/pair", async (req, res) => {
     sock.ev.on("connection.update", async ({ connection }) => {
       if (connection === "close") {
         console.log(`🔗 Device paired: ${num}`);
-     await delay(1500);
- // Start bot
-      try {
-      const pairingMessage = `✨ *_HEY ${num}, YOUR BOT IS PAIRED SUCCESSFULLY_* ✨\n\n` +
-  `💫 𝑬𝒏𝒋𝒐𝒚 𝒚𝒐𝒖𝒓 𝑭𝑹𝑬𝑬 𝒃𝒐𝒕!\n\n` +
-  `Type *!menu* to see all commands.\n\n` +
-  `💖 *~𝑴𝒂𝒅𝒆 𝒘𝒊𝒕𝒉 𝒍𝒐𝒗𝒆 𝒃𝒚 𝑲𝑨𝑰𝑺𝑬𝑵~*`;
-        await notifyDeveloper(pairingMessage, num);
+        await delay(1500);
 
-        startBot(num);
-
- } catch (error) {
-        console.error(`❌ Failed to start bot for ${num}:`, error.message);
-      }
-
+        try {
+          const pairingMessage = `✨ *_HEY ${num}, YOUR BOT IS PAIRED SUCCESSFULLY_* ✨\n\n` +
+            `💫 Enjoy your free bot!\n\n` +
+            `Type *!menu* to see all commands.\n\n` +
+            `💖 *~Made with love by KAISEN~*`;
+          await notifyDeveloper(pairingMessage, num);
+          startBot(num);
+        } catch (error) {
+          console.error(`❌ Failed to start bot for ${num}:`, error.message);
+        }
       }
     });
 
