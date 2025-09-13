@@ -76,7 +76,7 @@ plugin({
             const image = results[i];
             await message.client.sendMessage(message.jid, {
                 image: { url: image.url },
-                caption: `🖼️ *Search:* ${text}\n📸 *Title:* ${image.title}\n👀 *Views:* ${image.views}\n📥 *Downloads:* ${image.downloads}\n🔗 *Quality:* High Resolution\n\n> *${CMD_NAME}*`,
+                caption: `🖼️ *Search:* ${text}\n> *${CMD_NAME}*`,
                 contextInfo: { 
                     mentionedJid: [message.sender],
                     forwardingScore: 999,
