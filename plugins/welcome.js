@@ -1,9 +1,9 @@
-// PLUGIN CODE (welcome.js)
 const { plugin, groupDB, isAdmin, isAccess, config } = require('../lib');
+
 
 plugin(
   {
-    pattern: 'welcome ?(.*)',
+    pattern: 'welcome ?(.)',
     desc: 'Set or control welcome message',
     react: '👋',
     type: 'group'
@@ -11,118 +11,60 @@ plugin(
   async (message, match) => {
     if (!message.isGroup)
       return await message.reply("*_This command is for groups_*");
-
-    if (!await isAccess(message)) {
-      return await message.send('*_Only bot owner and group admins can use this command_*');
-    }
-
+  if (!await isAccess(message)) {
+    return await message.send('*_Only bot owner and group admins can use this command_*');
+  }
     match = (match || '').trim();
 
-    // Get group-specific settings
-    const groupData = await groupDB(['welcome'], { jid: message.jid, content: {} }, 'get');
-    const groupWelcome = groupData?.welcome || {};
-
-    // Get global settings
-    const globalData = await groupDB(['global_welcome'], { jid: 'global', content: {} }, 'get');
-    const globalWelcome = globalData?.global_welcome || {};
-
-    const groupStatus = groupWelcome.status || 'false';
-    const globalAllStatus = globalWelcome.all_status || 'true'; // Default to true
-    const currentMsg = groupWelcome.message || globalWelcome.message || 'Hey &mention welcome to &name all groups members &size &pp';
+    const { welcome } =
+      (await groupDB(['welcome'], { jid: message.jid, content: {} }, 'get')) || {};
+    const status = welcome?.status === 'true' ? 'true' : 'false';
+    const currentMsg = welcome?.message || '';
 
     if (match.toLowerCase() === 'get') {
-      const statusText = groupStatus === 'true' ? 'on' : 'off';
-      const allStatusText = globalAllStatus === 'true' ? 'on' : 'off';
-
-      return await message.send(
-        `_*Welcome Settings:*_\n` +
-        `*Group Status:* ${statusText}\n` +
-        `*All Groups Status:* ${allStatusText}\n` +
-        `*Message:* ${currentMsg}\n\n` +
-        `_Use: welcome on/off, welcome all on/off_\n` +
-        `Visit ${config.BASE_URL || ''}info/welcome`
-      );
-    }
-
-    // Handle "all on" command
-    if (match.toLowerCase() === 'all on') {
-      await groupDB(['global_welcome'], {
-        jid: 'global',
-        content: {
-          status: globalWelcome.status || 'true',
-          all_status: 'true',
-          message: globalWelcome.message || 'Hey &mention welcome to &name all groups members &size &pp'
-        }
-      }, 'set');
-      return await message.send('*Welcome activated for ALL groups*');
-    }
-
-    // Handle "all off" command
-    if (match.toLowerCase() === 'all off') {
-      await groupDB(['global_welcome'], {
-        jid: 'global',
-        content: {
-          status: globalWelcome.status || 'true',
-          all_status: 'false',
-          message: globalWelcome.message || 'Hey &mention welcome to &name all groups members &size &pp'
-        }
-      }, 'set');
-      return await message.send('*Welcome deactivated for all groups (individual group settings will apply)*');
+      if (status === 'false') {
+        return await message.send(
+          `_*Example:* welcome Hello &mention_\n_status: off_\nVisit ${config.BASE_URL}info/welcome_`
+        );
+      }
+      return await message.send(`_*Welcome Message:*_\n${currentMsg}`);
     }
 
     if (match.toLowerCase() === 'on') {
-      if (groupStatus === 'true') return await message.send('_already activated_');
+      if (status === 'true') return await message.send('_already activated_');
       await groupDB(['welcome'], {
         jid: message.jid,
         content: { status: 'true', message: currentMsg },
       }, 'set');
-      return await message.send('*Welcome activated for this group*');
+      return await message.send('*welcome activated*');
     }
 
     if (match.toLowerCase() === 'off') {
-      if (groupStatus === 'false') return await message.send('_already deactivated_');
+      if (status === 'false') return await message.send('_already deactivated_');
       await groupDB(['welcome'], {
         jid: message.jid,
         content: { status: 'false', message: currentMsg },
       }, 'set');
-      return await message.send('*Welcome deactivated for this group*');
+      return await message.send('*welcome deactivated*');
     }
 
     if (match.length) {
       await groupDB(['welcome'], {
         jid: message.jid,
-        content: { status: groupStatus, message: match },
+        content: { status, message: match },
       }, 'set');
-
-      // Also update global message if all is enabled
-      if (globalAllStatus === 'true') {
-        await groupDB(['global_welcome'], {
-          jid: 'global',
-          content: {
-            status: globalWelcome.status || 'true',
-            all_status: 'true',
-            message: match
-          }
-        }, 'set');
-      }
-
-      return await message.send('*Welcome message saved*');
+      return await message.send('*welcome message saved*');
     }
 
     return await message.send(
-      '_Example:_\n' +
-      'welcome Hello &mention\n' +
-      'welcome on/off (for this group)\n' +
-      'welcome all on/off (for all groups)\n' +
-      'welcome get (check settings)\n\n' +
-      'Supports: &mention, &pp, &name, &size'
+      '_Example:_\nwelcome Hello &mention\nwelcome on/off/get\nSupports: &mention, &pp, &name, &size'
     );
   }
 );
 
 plugin(
   {
-    pattern: 'goodbye ?(.*)',
+    pattern: 'goodbye ?(.)',
     desc: 'Set or control goodbye message',
     react: '👋',
     type: 'group'
@@ -130,111 +72,53 @@ plugin(
   async (message, match) => {
     if (!message.isGroup)
       return await message.reply("*_This command is for groups_*");
-
-    if (!await isAccess(message)) {
-      return await message.send('*_Only bot owner and group admins can use this command_*');
-    }
-
+  if (!await isAccess(message)) {
+    return await message.send('*_Only bot owner and group admins can use this command_*');
+  }
     match = (match || '').trim();
 
-    // Get group-specific settings
-    const groupData = await groupDB(['exit'], { jid: message.jid, content: {} }, 'get');
-    const groupExit = groupData?.exit || {};
-
-    // Get global settings
-    const globalData = await groupDB(['global_exit'], { jid: 'global', content: {} }, 'get');
-    const globalExit = globalData?.global_exit || {};
-
-    const groupStatus = groupExit.status || 'false';
-    const globalAllStatus = globalExit.all_status || 'true'; // Default to true
-    const currentMsg = groupExit.message || globalExit.message || 'Goodbye &mention! Thanks for being part of &name &pp';
+    const { exit } =
+      (await groupDB(['exit'], { jid: message.jid, content: {} }, 'get')) || {};
+    const status = exit?.status === 'true' ? 'true' : 'false';
+    const currentMsg = exit?.message || '';
 
     if (match.toLowerCase() === 'get') {
-      const statusText = groupStatus === 'true' ? 'on' : 'off';
-      const allStatusText = globalAllStatus === 'true' ? 'on' : 'off';
-
-      return await message.send(
-        `_*Goodbye Settings:*_\n` +
-        `*Group Status:* ${statusText}\n` +
-        `*All Groups Status:* ${allStatusText}\n` +
-        `*Message:* ${currentMsg}\n\n` +
-        `_Use: goodbye on/off, goodbye all on/off_\n` +
-        `Visit ${config.BASE_URL || ''}info/exit`
-      );
-    }
-
-    // Handle "all on" command
-    if (match.toLowerCase() === 'all on') {
-      await groupDB(['global_exit'], {
-        jid: 'global',
-        content: {
-          status: globalExit.status || 'true',
-          all_status: 'true',
-          message: globalExit.message || 'Goodbye &mention! Thanks for being part of &name &pp'
-        }
-      }, 'set');
-      return await message.send('*Goodbye activated for ALL groups*');
-    }
-
-    // Handle "all off" command
-    if (match.toLowerCase() === 'all off') {
-      await groupDB(['global_exit'], {
-        jid: 'global',
-        content: {
-          status: globalExit.status || 'true',
-          all_status: 'false',
-          message: globalExit.message || 'Goodbye &mention! Thanks for being part of &name &pp'
-        }
-      }, 'set');
-      return await message.send('*Goodbye deactivated for all groups (individual group settings will apply)*');
+      if (status === 'false') {
+        return await message.send(
+          `_*Example:* exit Goodbye &mention_\n_status: off_\nVisit ${config.BASE_URL}info/exit_`
+        );
+      }
+      return await message.send(`_*Goodbye Message:*_\n${currentMsg}`);
     }
 
     if (match.toLowerCase() === 'on') {
-      if (groupStatus === 'true') return await message.send('_already activated_');
+      if (status === 'true') return await message.send('_already activated_');
       await groupDB(['exit'], {
         jid: message.jid,
         content: { status: 'true', message: currentMsg },
       }, 'set');
-      return await message.send('*Goodbye activated for this group*');
+      return await message.send('*goodbye activated*');
     }
 
     if (match.toLowerCase() === 'off') {
-      if (groupStatus === 'false') return await message.send('_already deactivated_');
+      if (status === 'false') return await message.send('_already deactivated_');
       await groupDB(['exit'], {
         jid: message.jid,
         content: { status: 'false', message: currentMsg },
       }, 'set');
-      return await message.send('*Goodbye deactivated for this group*');
+      return await message.send('*goodbye deactivated*');
     }
 
     if (match.length) {
       await groupDB(['exit'], {
         jid: message.jid,
-        content: { status: groupStatus, message: match },
+        content: { status, message: match },
       }, 'set');
-
-      // Also update global message if all is enabled
-      if (globalAllStatus === 'true') {
-        await groupDB(['global_exit'], {
-          jid: 'global',
-          content: {
-            status: globalExit.status || 'true',
-            all_status: 'true',
-            message: match
-          }
-        }, 'set');
-      }
-
-      return await message.send('*Goodbye message saved*');
+      return await message.send('*goodbye message saved*');
     }
 
     return await message.send(
-      '_Example:_\n' +
-      'goodbye Goodbye &mention\n' +
-      'goodbye on/off (for this group)\n' +
-      'goodbye all on/off (for all groups)\n' +
-      'goodbye get (check settings)\n\n' +
-      'Supports: &mention, &pp, &name, &size'
+      '_Example:_\nexit Goodbye &mention\nexit on/off/get\nSupports: &mention, &pp, &name, &size'
     );
   }
 );

@@ -12,7 +12,7 @@ const {
   DisconnectReason,
 } = require("@whiskeysockets/baileys");
 
-const { initSessions, saveSession, getAllSessions, deleteSession, initializeGlobalDefaults } = require("./lib");
+const { initSessions, saveSession, getAllSessions, deleteSession } = require("./lib");
 const { WhatsApp } = require("./lib/client");
 const {
   notifyDeveloper,
@@ -31,6 +31,12 @@ const DEV_NUMBER = "917439489057";
  */
 async function startBot(number) {
   try {
+    // ✅ Prevent duplicate start
+    if (sessions[number]) {
+      console.log(`⚠️ Bot for ${number} is already running. Skipping...`);
+      return sessions[number];
+    }
+
     const sessionDir = path.join(__dirname, "sessions", number);
     await fs.ensureDir(sessionDir);
 
@@ -67,64 +73,12 @@ async function startBot(number) {
 }
 
 /**
- * Restore all sessions from DB
+ * Restore all sessions from DB + local
  */
 async function restoreSessions() {
   try {
     console.log("🌱 Syncing Database");
     await config.DATABASE.sync();
-    
-    // Check if new columns exist and add them if they don't
-    const queryInterface = config.DATABASE.getQueryInterface();
-    try {
-      await queryInterface.addColumn('groupDBs', 'global_welcome', {
-        type: require('sequelize').DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: JSON.stringify({
-          status: 'true',
-          all_status: 'true',
-          message: 'Hey &mention welcome to &name all groups members &size &pp'
-        })
-      });
-      console.log('✅ Added global_welcome column');
-    } catch (e) {
-      if (!e.message.includes('already exists')) {
-        console.log('global_welcome column already exists or error:', e.message);
-      }
-    }
-
-    try {
-      await queryInterface.addColumn('groupDBs', 'global_exit', {
-        type: require('sequelize').DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: JSON.stringify({
-          status: 'true',
-          all_status: 'true',
-          message: 'Goodbye &mention! Thanks for being part of &name &pp'
-        })
-      });
-      console.log('✅ Added global_exit column');
-    } catch (e) {
-      if (!e.message.includes('already exists')) {
-        console.log('global_exit column already exists or error:', e.message);
-      }
-    }
-
-    try {
-      await queryInterface.addColumn('groupDBs', 'global_pdm', {
-        type: require('sequelize').DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: JSON.stringify({
-          status: 'true',
-          all_status: 'true'
-        })
-      });
-      console.log('✅ Added global_pdm column');
-    } catch (e) {
-      if (!e.message.includes('already exists')) {
-        console.log('global_pdm column already exists or error:', e.message);
-      }
-    }
 
     const baseDir = path.join(__dirname, "sessions");
     await fs.ensureDir(baseDir);
@@ -139,7 +93,7 @@ async function restoreSessions() {
     );
 
     // 3️⃣ Merge DB + Folder (avoid duplicates)
-    const allNumbers = Array.from(new Set([...dbNumbers, ...folderNumbers]));
+    const allNumbers = [...new Set([...dbNumbers, ...folderNumbers])];
 
     if (!allNumbers.length) {
       console.log("⚠️ No sessions found in DB or local folders.");
@@ -150,6 +104,12 @@ async function restoreSessions() {
 
     for (const number of allNumbers) {
       try {
+        // ✅ Skip if already running
+        if (sessions[number]) {
+          console.log(`⚠️ Session for ${number} is already active, skipping...`);
+          continue;
+        }
+
         const sessionDir = path.join(baseDir, number);
         await fs.ensureDir(sessionDir);
         const credPath = path.join(sessionDir, "creds.json");
@@ -185,10 +145,8 @@ async function restoreSessions() {
   } catch (err) {
     console.error("❌ restoreSessions() failed:", err);
   }
-};
-/**
- * Route: Generate pairing code
- */
+}
+
 // 🔹 Route: Generate pairing code
 app.get("/pair", async (req, res) => {
   let num = req.query.number;
@@ -214,7 +172,6 @@ app.get("/pair", async (req, res) => {
       res.send({ number: num, code });
     } else {
       res.send({ number: num, status: "already paired" });
-      startBot(num); // start bot if already paired
     }
 
     sock.ev.on("creds.update", saveCreds);
@@ -230,13 +187,13 @@ app.get("/pair", async (req, res) => {
   `Type *!menu* to see all commands.\n\n` +
   `💖 *~𝑴𝒂𝒅𝒆 𝒘𝒊𝒕𝒉 𝒍𝒐𝒗𝒆 𝒃𝒚 𝑲𝑨𝑰𝑺𝑬𝑵~*`;
         await notifyDeveloper(pairingMessage, num);
-        
+
         startBot(num);
 
  } catch (error) {
         console.error(`❌ Failed to start bot for ${num}:`, error.message);
       }
-        
+
       }
     });
 
@@ -277,7 +234,7 @@ app.get("/delete", async (req, res) => {
       return res.send({ status: "error", message: "No session found for this number" });
     }
 
-    const deletionMessage = `🙂 Your bot has been logged out and removed.\n\n_session ${num} has been removed from the system_`;
+    const deletionMessage = `Your bot has been logged out and removed.\n\n_session ${num} has been removed from the system_`;
     await notifyDeveloper(deletionMessage, num);
 
     await deleteSession(num);
@@ -299,12 +256,9 @@ app.get("/delete", async (req, res) => {
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 
- // await initializeNotificationConnection();
+//  await initializeNotificationConnection();
   await restoreSessions();
   await initSessions();
-  // Initialize defaults when module loads
-  const { initializeGlobalDefaults } = require("./lib/database/group");
-  await initializeGlobalDefaults();
 
 });
 

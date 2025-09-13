@@ -4,6 +4,7 @@ const {
 } = require('../lib');
 const { CMD_NAME } = require('../config');
 const axios = require('axios');
+const cheerio = require('cheerio');
 
 plugin({
     pattern: "img ?(.*)",
@@ -22,33 +23,43 @@ plugin({
     if (!text) text = match.trim();
 
     count = parseInt(count) || 5; 
-      try {
-        const res = await axios.get(`https://apis.davidcyriltech.my.id/googleimage`, {
-            params: { query: text }
-        });
-     const { success, results } = res.data;
 
-        if (!success || !results || results.length === 0) {
+    try {
+        // 🔍 Google Images search
+        const url = `https://www.google.com/search?hl=en&tbm=isch&q=${encodeURIComponent(text)}`;
+        const { data } = await axios.get(url, {
+            headers: { "User-Agent": "Mozilla/5.0" }
+        });
+
+        // 📑 Parse HTML for image URLs
+        const $ = cheerio.load(data);
+        let results = [];
+        $("img").each((i, el) => {
+            let src = $(el).attr("src");
+            if (src && src.startsWith("http")) results.push(src);
+        });
+
+        if (!results || results.length === 0) {
             return await message.send(`❌ No images found for *"${text}"*. Try another search.`);
         }
 
         const max = Math.min(results.length, count);
 
         for (let i = 0; i < max; i++) {
-           await message.client.sendMessage(message.jid, {
-            image: { url: results[i]},
-            caption: `🖼️ *Search:* ${text}\n> *${CMD_NAME}*`,
-            contextInfo: { 
-                mentionedJid: [message.sender],
-                forwardingScore: 999,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '',
-                    newsletterName: '',
-                    serverMessageId: 143
+            await message.client.sendMessage(message.jid, {
+                image: { url: results[i] },
+                caption: `🖼️ *Search:* ${text}\n> *${CMD_NAME}*`,
+                contextInfo: { 
+                    mentionedJid: [message.sender],
+                    forwardingScore: 999,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '',
+                        newsletterName: '',
+                        serverMessageId: 143
+                    }
                 }
-            }
-        }, { quoted: message.data });
+            }, { quoted: message.data });
         }
 
     } catch (err) {
