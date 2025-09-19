@@ -12,10 +12,10 @@ plugin(
     if (!message.isGroup)
       return await message.reply("*_This command is for groups_*");
   if (!await isAccess(message)) {
-		return await message.send('*_Only bot owner and group admins can use this command_*');
+    return await message.send('*_Only bot owner and group admins can use this command_*');
   }
     match = (match || '').trim();
-    
+
     const { welcome } =
       (await groupDB(['welcome'], { jid: message.jid, content: {} }, 'get')) || {};
     const status = welcome?.status === 'true' ? 'true' : 'false';
@@ -73,7 +73,7 @@ plugin(
     if (!message.isGroup)
       return await message.reply("*_This command is for groups_*");
   if (!await isAccess(message)) {
-		return await message.send('*_Only bot owner and group admins can use this command_*');
+    return await message.send('*_Only bot owner and group admins can use this command_*');
   }
     match = (match || '').trim();
 

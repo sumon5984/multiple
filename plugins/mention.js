@@ -10,8 +10,6 @@ const {
 
 plugin({
         pattern: 'mention ?(.*)',
-        on: 'all',
-        allowBot: true,
         fromMe: false,
         type: 'user'
 }, async (message, match) => {

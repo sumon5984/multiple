@@ -1,9 +1,9 @@
 const { plugin, mode } = require('../lib');
-const songCommand = require('../lib/ytdl'); // put your big songCommand code in lib/song-command.js
+const videoCommand= require('./client/ytmp4'); // put your big songCommand code in lib/song-command.js
 
 plugin({
-  pattern: 'song ?(.*)',
-  desc: 'Download YouTube songs as MP3',
+  pattern: 'video ?(.*)',
+  desc: 'Download YouTube songs as MP4',
   react: '🎵',
   fromMe: mode,
   type: 'download'
@@ -11,11 +11,11 @@ plugin({
   try {
     const query = (match && match.trim()) || (message.reply_text && message.reply_text.trim());
     if (!query) {
-      return await message.reply('❌ Please provide a song name or YouTube link.\n\nExample: `.song despacito`');
+      return await message.reply('❌ Please provide a song name or YouTube link.\n\nExample: `.video despacito`');
     }
 
     // Call your main song downloader logic
-    await songCommand(message.client, message.chat, message);
+    await videoCommand(message.client, message.chat, message);
 
   } catch (err) {
     console.error('[PLUGIN SONG] Error:', err?.message || err);

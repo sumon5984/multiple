@@ -1,10 +1,10 @@
-
-
 const { plugin, commands, mode } = require('../lib');
-const { BOT_INFO, PREFIX }  = require('../config');
-const { version }   = require('../package.json');
-const { isUrls }    = require('../lib/extra');
-const os            = require('os');
+const { BOT_INFO, PREFIX } = require('../config');
+const { version } = require('../package.json');
+const { isUrls, fancy } = require('../lib/extra'); // ✅ make sure fancy is exported from extra.js
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
 
 const runtime = secs => {
   const pad = s => s.toString().padStart(2, '0');
@@ -16,19 +16,29 @@ const runtime = secs => {
 
 const readMore = String.fromCharCode(8206).repeat(4001);
 
+function externalMenuPreview(profileImageBuffer, options = {}) {
+  return {
+    showAdAttribution: true,
+    title: options.title || 'KAISEN-MD',
+    body: options.body || 'Command Menu',
+    thumbnail: profileImageBuffer, // ✅ buffer, not url
+    sourceUrl: options.sourceUrl || 'https://whatsapp.com/channel/0029VaAKCMO1noz22UaRdB1Q',
+    mediaType: 1,
+    renderLargerThumbnail: true
+  };
+}
+
 plugin({
   pattern: 'menu|list',
   desc: 'Displays the command menu',
   type: 'whatsapp',
   fromMe: mode
 }, async (message) => {
-  const [botName, rawMediaUrl] = BOT_INFO.split(';');
-  const mediaUrl = rawMediaUrl?.replace(/&gif/g, '');
-  const isGif = rawMediaUrl?.includes('&gif');
+  const [botName] = BOT_INFO.split(';');
   const userName = message.pushName || 'User';
   const usedGB = ((os.totalmem() - os.freemem()) / 1073741824).toFixed(2);
-  const totGB  = (os.totalmem() / 1073741824).toFixed(2);
-  const ram    = `${usedGB} / ${totGB} GB`;
+  const totGB = (os.totalmem() / 1073741824).toFixed(2);
+  const ram = `${usedGB} / ${totGB} GB`;
 
   let menuText = `
 *╭══〘〘 ${botName} 〙〙*
@@ -73,24 +83,22 @@ ${readMore}
   }
 
   menuText += `\n💖 *~_Made with love by KAISEN_~*`;
-
- try {
-  if (mediaUrl && isUrls(mediaUrl)) {
-    const opts = {
-      video: { url: mediaUrl },
-      gifPlayback: true, // this makes the video behave like a GIF
-      caption: menuText,
-      mimetype: 'video/mp4' // required for WhatsApp
-    };
-
-    await message.client.sendMessage(message.jid, opts, { quoted: message });
-  } else {
-    await message.send(menuText);
+const text = menuText;
+  try {
+    const menuImagePath = path.join(__dirname, "../media/tools/menu1.jpg");
+    if (fs.existsSync(menuImagePath)) {
+      const buffer = fs.readFileSync(menuImagePath);
+      await message.client.sendMessage(message.jid, {
+        text,
+        contextInfo: {
+          externalAdReply: externalMenuPreview(buffer)
+        }
+      });
+    } else {
+      await message.send(menuText + `\n\n⚠️ *Menu image not found, sending text only.*`);
+    }
+  } catch (err) {
+    console.error('❌ Menu send error:', err);
+    await message.send(menuText + `\n\n⚠️ *Media failed to load, sending text only.*`);
   }
-} catch (err) {
-  console.error('❌ Menu send error:', err);
-  await message.send(
-    menuText + `\n\n⚠️ *Media failed to load, sending text only.*`
-  );
- }
 });

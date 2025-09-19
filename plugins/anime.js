@@ -40,7 +40,7 @@ plugin({
                   );
               } else {
 
-                  reply(`Unexpected Error: ${e.message}`);
+                  reply(`Unexpected Error: Please try again later.`);
               }
           }
       });
@@ -83,7 +83,7 @@ plugin({
                       );
                   } else {
 
-                      reply(`Unexpected Error: ${e.message}`);
+                      reply(`Unexpected Error: Please try again later.`);
                   }
               }
           });
@@ -125,7 +125,7 @@ plugin({
                       );
                   } else {
 
-                      reply(`Unexpected Error: ${e.message}`);
+                      reply(`Unexpected Error: Please try again later.`);
                   }
               }
           });
@@ -153,7 +153,7 @@ plugin({
     
   } catch (error) {
     console.error("❌ Error in cosplay command:", error);
-    await message.send(`❌ *Error in cosplay command:*\n\`\`\`${error.message}\`\`\``);
+    await message.send(`❌ *Error in cosplay command:*\n\`\`\`Please try again later.\`\`\``);
   }
 });
 

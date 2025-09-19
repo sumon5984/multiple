@@ -65,7 +65,7 @@ plugin({
     console.error(error);
     let errMsg = error.code === 'ETIMEDOUT'
       ? "❌ Timeout error: Catbox is not responding. Try again later or check network."
-      : `🙁 Error: ${error.message || error}`;
+      : `🙁 Error: Please try again later.`;
     await message.reply(errMsg);
   }
 });

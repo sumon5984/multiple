@@ -42,7 +42,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .cry command:", error);
-        await message.send(`❌ *Error in .cry command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .cry command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -78,7 +78,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .cuddle command:", error);
-        await message.send(`❌ *Error in .cuddle command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .cuddle command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -114,7 +114,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .bully command:", error);
-        await message.send(`❌ *Error in .bully command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .bully command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -149,7 +149,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .hug command:", error);
-        await message.send(`❌ *Error in .hug command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .hug command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -185,7 +185,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .awoo command:", error);
-        await message.send(`❌ *Error in .awoo command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .awoo command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -215,7 +215,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .lick command:", error);
-        await message.send(`❌ *Error in .lick command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .lick command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -251,7 +251,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .pat command:", error);
-        await message.send(`❌ *Error in .pat command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .pat command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -287,7 +287,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .smug command:", error);
-        await message.send(`❌ *Error in .smug command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .smug command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -323,7 +323,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .bonk command:", error);
-        await message.send(`❌ *Error in .bonk command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .bonk command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -358,7 +358,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .yeet command:", error);
-        await message.send(`❌ *Error in .yeet command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .yeet command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -394,7 +394,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .blush command:", error);
-        await message.send(`❌ *Error in .blush command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .blush command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -429,7 +429,7 @@ let gifBuffer = await fetchGif(gifUrl);
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .handhold command:", error);
-        await message.send(`❌ *Error in .handhold command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .handhold command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -464,7 +464,7 @@ let gifBuffer = await fetchGif(gifUrl);
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .highfive command:", error);
-        await message.send(`❌ *Error in .highfive command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .highfive command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -500,7 +500,7 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .nom command:", error);
-        await message.send(`❌ *Error in .nom command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .nom command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });
 
@@ -536,6 +536,6 @@ plugin({
         }, 'video');
     } catch (error) {
         console.error("❌ Error in .wave command:", error);
-        await message.send(`❌ *Error in .wave command:*\n\`\`\`${error.message}\`\`\``);
+        await message.send(`❌ *Error in .wave command:*\n\`\`\`Please try again later.\`\`\``);
     }
 });

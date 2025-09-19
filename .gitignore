@@ -1,0 +1,13 @@
+# Ignore node modules
+node_modules/
+
+# Ignore package lock
+package-lock.json
+
+# Ignore WhatsApp bot sessions
+sessions/
+
+# (Optional) Ignore logs
+*.log
+
+notify/

@@ -10,7 +10,7 @@ const toBool = (x) => x === 'true';
 const DB_URL = process.env.DATABASE_URL || '';
 
 module.exports = {
-  SESSION_ID: process.env.SESSION_ID || 'KAISEN~ahxESJhS#i0pPVs3SlVHEvRcGc4WHg4RD5hUL_SKHHl2trEMx-HY', // add your session id here
+  SESSION_ID: process.env.SESSION_ID || 'KAISEN~KtYliJLa#CbzInslQXZN2j8TFnNJ6A8tISfU6kJLQgYudh02nuf8', // add your session id here
 
   HEROKU: {
     API_KEY: process.env.HEROKU_API_KEY,
@@ -55,6 +55,8 @@ module.exports = {
   RMBG_KEY: process.env.RMBG_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '', // add your gemini api key here
   ELEVENLABS: process.env.ELEVENLABS || '',
+  IMGFLIP_USERNAME: process.env.IMGFLIP_USERNAME || '', // add your imgflip username here
+  IMGFLIP_PASSWORD: process.env.IMGFLIP_PASSWORD || '', // add your imgflip password here
 
   DATABASE: DB_URL
     ? new Sequelize(DB_URL, {
