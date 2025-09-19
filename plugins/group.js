@@ -367,29 +367,7 @@ plugin({
 	}
 });
 
-// Leave group
-plugin({
-	pattern: 'left|exit',
-	type: 'group',
-	fromMe: mode,
-	desc: 'Leave group'
-}, async (message, match) => {
-	if (!message.isGroup) {
-			return await message.reply("*_This command is for groups only_*");
-	}
 
-	if (!await isAccess(message)) {
-			return await sendResponse(message, '*_Only bot owner and group admins can use this command_*');
-	}
-
-	try {
-			await sendResponse(message, '_Goodbye! 👋_');
-			await message.client.groupLeave(message.jid);
-	} catch (error) {
-			console.error('Leave group error:', error);
-			return await sendResponse(message, '_Failed to leave group_');
-	}
-});
 
 // Join group using invite link
 plugin({
