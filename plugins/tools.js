@@ -1,7 +1,8 @@
 const {
 	plugin,
 	mode,
-	isBot
+	isBot,
+  personalDB
 } = require('../lib');
 
 
