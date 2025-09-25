@@ -42,7 +42,6 @@ plugin({
 • Status: ${current.status === 'true' ? '✅ ON' : '❌ OFF'}
 • Scope: ${current.scope}
 • Typing Delay (ms): ${current.typingMs}
-• Excluded JIDs: ${current.excludeJids.length ? current.excludeJids.join(', ') : 'None'}
 
 *Commands:*
 • chatbot on/off
