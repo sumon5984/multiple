@@ -12,46 +12,74 @@ plugin({
 
   const fullJid = message.client.user.id;
   const botNumber = fullJid.split(':')[0];
-  const input = match.trim().toLowerCase();
+  const raw = (match || '').trim();
+  const lower = raw.toLowerCase();
 
-  // --- CHATBOT ON ---
-  if (input === 'on') {
-    await personalDB(['chatbot'], { content: { status: 'on', language: 'bengali', scope: 'all' } }, 'set', botNumber);
-    return await message.send('✅ *Chatbot enabled*\n🌐 Language: Bengali (default)\n📍 Scope: All chats');
-  }
+  // Default settings
+  let current = {
+    status: 'true',
+    scope: 'only_group', // all | only_pm | only_group
+    typingMs: 800,
+    excludeJids: []
+  };
 
-  // --- CHATBOT OFF ---
-  if (input === 'off') {
-    await personalDB(['chatbot'], { content: { status: 'off' } }, 'set', botNumber);
-    return await message.send('🚫 *Chatbot disabled*');
-  }
-
-  // --- CHATBOT LANGUAGE ---
-  if (input.startsWith('ln ')) {
-    const lang = input.split(' ')[1];
-    if (!['bengali', 'english'].includes(lang)) {
-      return await message.send('⚠️ *Invalid language!*\nUse: `bengali` or `english`');
+  // Load saved settings if present
+  try {
+    const data = await personalDB(['chatbot'], {}, 'get', botNumber);
+    if (data?.chatbot) {
+      current = typeof data.chatbot === 'object'
+        ? data.chatbot
+        : JSON.parse(data.chatbot || '{}');
     }
-    await personalDB(['chatbot'], { content: { language: lang } }, 'set', botNumber);
-    return await message.send(`🌐 *Chatbot language set to:* ${lang}`);
+  } catch {
+    // ignore errors
   }
 
-  // --- CHATBOT SCOPE ---
-  if (input.startsWith('scope ')) {
-    const scope = input.split(' ')[1];
-    if (!['all', 'only_pm', 'only_group'].includes(scope)) {
-      return await message.send('⚠️ *Invalid scope!*\nUse: `all`, `only_pm`, or `only_group`');
-    }
-    await personalDB(['chatbot'], { content: { scope } }, 'set', botNumber);
-    return await message.send(`📍 *Chatbot scope set to:* ${scope}`);
+  // Show help / current settings
+  if (!raw) {
+    return await message.reply(`
+*Chatbot Settings*
+• Status: ${current.status === 'true' ? '✅ ON' : '❌ OFF'}
+• Scope: ${current.scope}
+• Typing Delay (ms): ${current.typingMs}
+• Excluded JIDs: ${current.excludeJids.length ? current.excludeJids.join(', ') : 'None'}
+
+*Commands:*
+• chatbot on/off
+• chatbot only_pm / only_group / all
+• chatbot typing <ms>
+• chatbot not_bot <jid>
+• chatbot reset
+`);
   }
 
-  // --- SHOW SETTINGS ---
-  const settings = await personalDB(['chatbot'], {}, 'get', botNumber);
-  return await message.send(
-    `⚙️ *Chatbot Settings*\n` +
-    `> Status: ${settings.chatbot?.status === 'on' ? '✅ ON' : '❌ OFF'}\n` +
-    `> Language: ${settings.chatbot?.language || 'bengali'}\n` +
-    `> Scope: ${settings.chatbot?.scope || 'all'}`
-  );
+  // Handle commands
+  if (lower === 'on') {
+    current.status = 'true';
+  } else if (lower === 'off') {
+    current.status = 'false';
+  } else if (['only_pm', 'only_group', 'all'].includes(lower)) {
+    current.scope = lower;
+  } else if (lower.startsWith('typing')) {
+    const n = parseInt(raw.replace(/typing/i, '').trim());
+    if (isNaN(n) || n < 100) return await message.send('Provide typing ms (e.g., 800)');
+    current.typingMs = n;
+  } else if (lower.startsWith('not_bot')) {
+    const j = raw.replace(/not_bot/i, '').trim();
+    if (!j) return await message.send('Provide a JID to exclude.');
+    if (!current.excludeJids.includes(j)) current.excludeJids.push(j);
+  } else if (lower === 'reset') {
+    current = {
+      status: 'true',
+      scope: 'only_group',
+      typingMs: 800,
+      excludeJids: []
+    };
+  } else {
+    return await message.send('*_Invalid command. Type `chatbot` to see help._*');
+  }
+
+  // Save updated settings
+  await personalDB(['chatbot'], { chatbot: current }, 'set', botNumber);
+  return await message.send('*_Chatbot settings updated._*');
 });

@@ -1,10 +1,9 @@
 const {
-	plugin,
-	mode,
-	isBot,
+  plugin,
+  mode,
+  isBot,
   personalDB
 } = require('../lib');
-
 
 plugin({
   pattern: 'astatus',
@@ -12,29 +11,36 @@ plugin({
   desc: 'Auto seen WhatsApp status',
   type: 'owner'
 }, async (message, match) => {
-	if (!await isBot(message)) {
-		return await message.send('*_Only bot owner can use this command_*');
-	}
-    const fullJid = message.client.user.id;
+  if (!await isBot(message)) {
+    return await message.send('*_Only bot owner can use this command_*');
+  }
+  
+  const fullJid = message.client.user.id;
   const botNumber = fullJid.split(':')[0];
   const input = match?.trim().toLowerCase();
 
   if (input === 'on') {
-    await personalDB(['autostatus'], { content: 'true' }, 'set', botNumber);
-    return await message.send('*Auto status seen is now `ON`*');
+    const result = await personalDB(['autostatus'], { content: 'true' }, 'set', botNumber);
+    if (result) {
+      return await message.send('*Auto status seen is now `ON`*');
+    } else {
+      return await message.send('*Error setting auto status*');
+    }
   } else if (input === 'off') {
-    await personalDB(['autostatus'], { content: 'false' }, 'set', botNumber);
-    return await message.send('*Auto status seen is now `OFF`*');
+    const result = await personalDB(['autostatus'], { content: 'false' }, 'set', botNumber);
+    if (result) {
+      return await message.send('*Auto status seen is now `OFF`*');
+    } else {
+      return await message.send('*Error setting auto status*');
+    }
   } else {
     const data = await personalDB(['autostatus'], {}, 'get', botNumber);
-    const status = data.autostatus === 'true';
+    const status = data?.autostatus === 'true';
     return await message.send(
       `*Auto Status Seen:*\nStatus: ${status ? 'ON' : 'OFF'}\n\nUse:\n• astatus on\n• astatus off`
     );
   }
 });
-
-
 
 plugin({
   pattern: 'astatusreact',
@@ -42,28 +48,37 @@ plugin({
   desc: 'Auto react WhatsApp status',
   type: 'owner'
 }, async (message, match) => {
-	if (!await isBot(message)) {
-		return await message.send('*_Only bot owner can use this command_*');
-	}
-    const fullJid = message.client.user.id;
+  if (!await isBot(message)) {
+    return await message.send('*_Only bot owner can use this command_*');
+  }
+  
+  const fullJid = message.client.user.id;
   const botNumber = fullJid.split(':')[0];
   const input = match?.trim().toLowerCase();
 
   if (input === 'on') {
-    await personalDB(['autostatus_react'], { content: 'true' }, 'set', botNumber);
-    return await message.send('*Auto status react is now `ON`*');
+    const result = await personalDB(['autostatus_react'], { content: 'true' }, 'set', botNumber);
+    if (result) {
+      return await message.send('*Auto status react is now `ON`*');
+    } else {
+      return await message.send('*Error setting auto status react*');
+    }
   } else if (input === 'off') {
-    await personalDB(['autostatus_react'], { content: 'false' }, 'set', botNumber);
-    return await message.send('*Auto status react is now `OFF`*');
+    const result = await personalDB(['autostatus_react'], { content: 'false' }, 'set', botNumber);
+    if (result) {
+      return await message.send('*Auto status react is now `OFF`*');
+    } else {
+      return await message.send('*Error setting auto status react*');
+    }
   } else {
     const data = await personalDB(['autostatus_react'], {}, 'get', botNumber);
-    const status = data.autostatus === 'true';
+    // Fixed: Use correct field name
+    const status = data?.autostatus_react === 'true';
     return await message.send(
       `*Auto Status react:*\nStatus react: ${status ? 'ON' : 'OFF'}\n\nUse:\n• astatusreact on\n• astatusreact off`
     );
   }
 });
-
 
 plugin({
   pattern: 'autotyping',
@@ -71,28 +86,37 @@ plugin({
   desc: 'autotyping WhatsApp',
   type: 'owner'
 }, async (message, match) => {
-	if (!await isBot(message)) {
-		return await message.send('*_Only bot owner can use this command_*');
-	}
-    const fullJid = message.client.user.id;
+  if (!await isBot(message)) {
+    return await message.send('*_Only bot owner can use this command_*');
+  }
+  
+  const fullJid = message.client.user.id;
   const botNumber = fullJid.split(':')[0];
   const input = match?.trim().toLowerCase();
 
   if (input === 'on') {
-    await personalDB(['autotyping'], { content: 'true' }, 'set', botNumber);
-    return await message.send('*activate auto typing `ON`*');
+    const result = await personalDB(['autotyping'], { content: 'true' }, 'set', botNumber);
+    if (result) {
+      return await message.send('*activate auto typing `ON`*');
+    } else {
+      return await message.send('*Error setting auto typing*');
+    }
   } else if (input === 'off') {
-    await personalDB(['autotyping'], { content: 'false' }, 'set', botNumber);
-    return await message.send('*dactivate auto typing `OFF`*');
+    const result = await personalDB(['autotyping'], { content: 'false' }, 'set', botNumber);
+    if (result) {
+      return await message.send('*deactivate auto typing `OFF`*');
+    } else {
+      return await message.send('*Error setting auto typing*');
+    }
   } else {
     const data = await personalDB(['autotyping'], {}, 'get', botNumber);
-    const status = data.autostatus === 'true';
+    // Fixed: Use correct field name
+    const status = data?.autotyping === 'true';
     return await message.send(
       `*autotyping:*\nstatus: ${status ? 'ON' : 'OFF'}\n\nUse:\n• autotyping on\n• autotyping off`
     );
   }
 });
-
 
 plugin({
   pattern: 'autoreact ?(.*)',
@@ -109,13 +133,23 @@ plugin({
   const input = match.trim().toLowerCase();
 
   if (input === 'on') {
-    await personalDB(['autoreact'], 'true', 'set', botNumber);
-    return await message.send('✅ *AutoReact enabled*');
+    // Fixed: Pass content properly
+    const result = await personalDB(['autoreact'], { content: 'true' }, 'set', botNumber);
+    if (result) {
+      return await message.send('✅ *AutoReact enabled*');
+    } else {
+      return await message.send('❌ *Error enabling AutoReact*');
+    }
   }
 
   if (input === 'off') {
-    await personalDB(['autoreact'], 'false', 'set', botNumber);
-    return await message.send('🚫 *AutoReact disabled*');
+    // Fixed: Pass content properly
+    const result = await personalDB(['autoreact'], { content: 'false' }, 'set', botNumber);
+    if (result) {
+      return await message.send('🚫 *AutoReact disabled*');
+    } else {
+      return await message.send('❌ *Error disabling AutoReact*');
+    }
   }
 
   const settings = await personalDB(['autoreact'], {}, 'get', botNumber);
