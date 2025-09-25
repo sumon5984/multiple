@@ -7,7 +7,7 @@ if (existsSync(path.join(__dirname, 'config.env'))) {
 process.env.NODE_OPTIONS = '--max_old_space_size=2560'; // 2.5GB memory
 const toBool = (x) => x === 'true';
 
-const DB_URL = '';
+const DB_URL = process.env.DATABASE_URL || '';
 
 module.exports = {
   SESSION_ID: process.env.SESSION_ID || 'KAISEN~KtYliJLa#CbzInslQXZN2j8TFnNJ6A8tISfU6kJLQgYudh02nuf8', // add your session id here
