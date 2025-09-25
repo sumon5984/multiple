@@ -22,15 +22,16 @@ if (!DEVELOPERS.includes(message.sender)) {
     return await message.send(`বোকাচোদা তুই আমার ওপরে যাবি নুনু মুকো 🤣🤣🤣
     এটা KING TOM and SUMON and DEVELOPER ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
 }
-
-    const { ban } = await personalDB(['ban'], { content: {} }, 'get');
+  const fullJid = message.client.user.id;
+  const botNumber = fullJid.split(':')[0];
+    const { ban } = await personalDB(['ban'], { content: {} }, 'get', botNumber);
 
     if (ban && ban.includes(message.jid)) {
         return await message.send("_already deactivated bot in this jid!_");
     }
 
     const update = ban ? ban + ',' + message.jid : message.jid;
-    await personalDB(['ban'], { content: update }, 'set');
+    await personalDB(['ban'], { content: update }, 'set', botNumber);
 
     await message.send('*✅ Bot deactivated in this jid⚫️*');
     process.exit(0);
@@ -47,9 +48,10 @@ plugin({
     return await message.send(`বোকাচোদা তুই আমার ওপরে যাবি নুনু মুকো 🤣🤣🤣
     এটা KING TOM and SUMON ছাড়া কেউই ব্যবহার করতে পারবে না রে পাগলা চোদা 🤣🤣`);
 }
+  const fullJid = message.client.user.id;
+  const botNumber = fullJid.split(':')[0];
 
-
-    const { ban } = await personalDB(['ban'], { content: {} }, 'get');
+    const { ban } = await personalDB(['ban'], { content: {} }, 'get', botNumber);
 
     if (!ban) return await message.send("_bot is not disabled in any jid_");
     if (!ban.includes(message.jid)) return await message.send("_bot not deactivated in this jid_");
@@ -59,7 +61,7 @@ plugin({
         if (a != message.jid) update.push(a);
     });
 
-    await personalDB(['ban'], { content: update.join(",") }, 'set');
+    await personalDB(['ban'], { content: update.join(",") }, 'set', botNumber);
     await message.send('*✅ Bot activated in this jid*\n*restarting!*');
     process.exit(0);
 });
