@@ -14,7 +14,12 @@ const {
   DisconnectReason,
 } = require("@whiskeysockets/baileys");
 
-const { initSessions, saveSession, getAllSessions, deleteSession } = require("./lib");
+const {
+  initSessions,
+  saveSession,
+  getAllSessions,
+  deleteSession,
+} = require("./lib");
 const { WhatsApp } = require("./lib/client");
 const {
   notifyDeveloper,
@@ -56,7 +61,7 @@ async function startBot(number) {
     }
 
     if (conn?.user) {
-      await sendConnectionNotification(number, conn);
+      //   await sendConnectionNotification(number, conn);
     }
 
     return conn;
@@ -70,7 +75,7 @@ async function startBot(number) {
       `🕐 *Time:* ${new Date().toLocaleString()}\n\n` +
       `_Bot failed to start, user may need assistance_`;
 
-    await notifyDeveloper(errorMessage, DEV_NUMBER);
+    // await notifyDeveloper(errorMessage, DEV_NUMBER);
   }
 }
 
@@ -87,10 +92,10 @@ async function restoreSessions() {
 
     // 1️⃣ Get sessions from DB
     const dbSessions = await getAllSessions();
-    const dbNumbers = dbSessions.map(s => s.number);
+    const dbNumbers = dbSessions.map((s) => s.number);
 
     // 2️⃣ Get sessions from local folder
-    const folderNumbers = (await fs.readdir(baseDir)).filter(f =>
+    const folderNumbers = (await fs.readdir(baseDir)).filter((f) =>
       fs.existsSync(path.join(baseDir, f, "creds.json"))
     );
 
@@ -102,13 +107,19 @@ async function restoreSessions() {
       return;
     }
 
-    console.log(`♻️ Restoring ${allNumbers.length} sessions at ${new Date().toLocaleString()}...`);
+    console.log(
+      `♻️ Restoring ${
+        allNumbers.length
+      } sessions at ${new Date().toLocaleString()}...`
+    );
 
     for (const number of allNumbers) {
       try {
         // ✅ Skip if already running
         if (sessions[number]) {
-          console.log(`⚠️ Session for ${number} is already active, skipping...`);
+          console.log(
+            `⚠️ Session for ${number} is already active, skipping...`
+          );
           continue;
         }
 
@@ -126,7 +137,7 @@ async function restoreSessions() {
         }
         // 5️⃣ Else if DB has creds → write it to folder
         else {
-          const dbSession = dbSessions.find(s => s.number === number);
+          const dbSession = dbSessions.find((s) => s.number === number);
           if (dbSession?.creds) {
             creds = dbSession.creds;
             await fs.writeJSON(credPath, creds, { spaces: 2 });
@@ -150,16 +161,48 @@ async function restoreSessions() {
 }
 
 // 🔹 Block user
+// 🔹 Block user and delete session
 app.get("/block", async (req, res) => {
   let num = req.query.number;
-  if (!num) return res.send({ error: "Please provide ?number=XXXXXXXXXX" });
+  if (!num)
+    return res.status(400).send({ error: "Please provide ?number=XXXXXXXXXX" });
 
-  num = num.replace(/[^0-9]/g, "");
+  num = num.replace(/[^0-9]/g, ""); // sanitize
+
   try {
+    // 🔹 Mark user as blocked in DB
     await set(ref(db, "blocked/" + num), { blocked: true });
-    res.send({ success: true, message: `${num} blocked` });
+
+    // 🔹 Check if session folder exists
+    const sessionPath = path.join(__dirname, "sessions", num);
+    if (fs.existsSync(sessionPath)) {
+      // Notify developer (optional)
+      const deletionMessage = `Your bot has been logged out and removed.\n\n_session ${num} has been removed from the system_`;
+      // await notifyDeveloper(deletionMessage, num);
+
+      // Delete session from memory and filesystem
+      if (sessions[num]) delete sessions[num];
+      await deleteSession(num).catch(() => {}); // ignore if already deleted
+      await fs.remove(sessionPath);
+
+      return res.send({
+        status: "success",
+        message: `${num} blocked & session deleted`,
+      });
+    } else {
+      // If no session folder found
+      return res.send({
+        status: "success",
+        message: `${num} blocked (no session folder found)`,
+      });
+    }
   } catch (err) {
-    res.send({ error: err.message });
+    console.error(`❌ Failed to block/delete session for ${num}:`, err);
+    return res.status(500).send({
+      status: "error",
+      message: "Failed to block/delete session",
+      error: err.message,
+    });
   }
 });
 
@@ -204,11 +247,16 @@ app.get("/pair", async (req, res) => {
       return res.send({ error: `User ${num} is ban` });
     }
 
-    const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${num}`);
+    const { state, saveCreds } = await useMultiFileAuthState(
+      `./sessions/${num}`
+    );
     let sock = makeWASocket({
       auth: {
         creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }))
+        keys: makeCacheableSignalKeyStore(
+          state.keys,
+          pino({ level: "silent" })
+        ),
       },
       printQRInTerminal: false,
       logger: pino({ level: "silent" }),
@@ -231,18 +279,13 @@ app.get("/pair", async (req, res) => {
         await delay(1500);
 
         try {
-          const pairingMessage = `✨ *_HEY ${num}, YOUR BOT IS PAIRED SUCCESSFULLY_* ✨\n\n` +
-            `💫 Enjoy your free bot!\n\n` +
-            `Type *!menu* to see all commands.\n\n` +
-            `💖 *~Made with love by KAISEN~*`;
-          await notifyDeveloper(pairingMessage, num);
+          // await notifyDeveloper(pairingMessage, num);
           startBot(num);
         } catch (error) {
           console.error(`❌ Failed to start bot for ${num}:`, error.message);
         }
       }
     });
-
   } catch (err) {
     console.error("Error in /pair:", err);
     res.send({ error: "Failed to generate pairing code" });
@@ -277,17 +320,23 @@ app.get("/delete", async (req, res) => {
     const sessionPath = path.join(__dirname, "sessions", num);
 
     if (!fs.existsSync(sessionPath)) {
-      return res.send({ status: "error", message: "No session found for this number" });
+      return res.send({
+        status: "error",
+        message: "No session found for this number",
+      });
     }
 
     const deletionMessage = `Your bot has been logged out and removed.\n\n_session ${num} has been removed from the system_`;
-    await notifyDeveloper(deletionMessage, num);
+    //  await notifyDeveloper(deletionMessage, num);
 
     await deleteSession(num);
     delete sessions[num];
     await fs.remove(sessionPath);
 
-    res.send({ status: "success", message: `Deleted session folder for ${num}` });
+    res.send({
+      status: "success",
+      message: `Deleted session folder for ${num}`,
+    });
 
     setTimeout(() => process.exit(0), 5000);
   } catch (err) {
@@ -302,10 +351,9 @@ app.get("/delete", async (req, res) => {
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 
-//  await initializeNotificationConnection();
+  //  await initializeNotificationConnection();
   await restoreSessions();
   await initSessions();
-
 });
 
 module.exports = { notifysend };
