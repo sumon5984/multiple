@@ -11,4 +11,5 @@ sessions/
 *.log
 
 notify/
+#
 database.db

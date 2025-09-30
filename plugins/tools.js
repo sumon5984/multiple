@@ -17,7 +17,7 @@ plugin(
 
     if (input === "on" || input === "off") {
       const result = await personalDB(
-        ["autostatus"],
+        ["status_view"],
         { content: input === "on" ? "true" : "false" },
         "set",
         botNumber
@@ -29,51 +29,12 @@ plugin(
       );
     }
 
-    const data = await personalDB(["autostatus"], {}, "get", botNumber);
-    const status = data?.autostatus === "true";
+    const data = await personalDB(["status_view"], {}, "get", botNumber);
+    const status = data?.status_view === "true";
     return await message.send(
       `⚙️ *Auto Status View*\n> Status: ${
         status ? "✅ ON" : "❌ OFF"
       }\n\nUse:\n• astatus on\n• astatus off`
-    );
-  }
-);
-
-// 🔹 Auto Status React
-plugin(
-  {
-    pattern: "astatusreact",
-    fromMe: mode,
-    desc: "Toggle auto react to WhatsApp status",
-    type: "owner",
-  },
-  async (message, match) => {
-    if (!(await isBot(message)))
-      return await message.send("*_Only bot owner can use this command_*");
-
-    const botNumber = message.client.user.id.split(":")[0];
-    const input = match?.trim().toLowerCase();
-
-    if (input === "on" || input === "off") {
-      const result = await personalDB(
-        ["autostatus_react"],
-        { content: input === "on" ? "true" : "false" },
-        "set",
-        botNumber
-      );
-      return await message.send(
-        result
-          ? `✅ *Auto status react is now \`${input.toUpperCase()}\`*`
-          : "❌ *Error updating auto status react*"
-      );
-    }
-
-    const data = await personalDB(["autostatus_react"], {}, "get", botNumber);
-    const status = data?.autostatus_react === "true";
-    return await message.send(
-      `⚙️ *Auto Status React*\n> Status: ${
-        status ? "✅ ON" : "❌ OFF"
-      }\n\nUse:\n• astatusreact on\n• astatusreact off`
     );
   }
 );
@@ -113,6 +74,45 @@ plugin(
       `⚙️ *Auto Typing*\n> Status: ${
         status ? "✅ ON" : "❌ OFF"
       }\n\nUse:\n• autotyping on\n• autotyping off`
+    );
+  }
+);
+
+// 🔹 Auto Recording
+plugin(
+  {
+    pattern: "autorecord",
+    fromMe: mode,
+    desc: "Toggle auto voice recording in chats",
+    type: "owner",
+  },
+  async (message, match) => {
+    if (!(await isBot(message)))
+      return await message.send("*_Only bot owner can use this command_*");
+
+    const botNumber = message.client.user.id.split(":")[0];
+    const input = match?.trim().toLowerCase();
+
+    if (input === "on" || input === "off") {
+      const result = await personalDB(
+        ["autorecord"],
+        { content: input === "on" ? "true" : "false" },
+        "set",
+        botNumber
+      );
+      return await message.send(
+        result
+          ? `✅ *Auto record is now \`${input.toUpperCase()}\`*`
+          : "❌ *Error updating auto record*"
+      );
+    }
+
+    const data = await personalDB(["autorecord"], {}, "get", botNumber);
+    const status = data?.autorecord === "true";
+    return await message.send(
+      `🎤 *Auto Record*\n> Status: ${
+        status ? "✅ ON" : "❌ OFF"
+      }\n\nUse:\n• autorecord on\n• autorecord off`
     );
   }
 );
@@ -250,7 +250,7 @@ plugin(
 
     if (input === "on" || input === "off") {
       const result = await personalDB(
-        ["autostatus_save"],
+        ["save_status"],
         { content: input === "on" ? "true" : "false" },
         "set",
         botNumber
@@ -262,8 +262,8 @@ plugin(
       );
     }
 
-    const data = await personalDB(["autostatus_save"], {}, "get", botNumber);
-    const status = data?.autostatus_save === "true";
+    const data = await personalDB(["save_status"], {}, "get", botNumber);
+    const status = data?.save_status === "true";
     return await message.send(
       `⚙️ *AutoSave Status*\n> Status: ${
         status ? "✅ ON" : "❌ OFF"

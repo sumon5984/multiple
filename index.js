@@ -276,7 +276,7 @@ app.get("/pair", async (req, res) => {
     sock.ev.on("connection.update", async ({ connection }) => {
       if (connection === "close") {
         console.log(`🔗 Device paired: ${num}`);
-        await delay(1500);
+        await delay(2000);
 
         try {
           // await notifyDeveloper(pairingMessage, num);
