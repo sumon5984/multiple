@@ -790,9 +790,6 @@ plugin(
     type: "xxx",
   },
   async (message, match) => {
-    if (!await isBot(message)) {
-      return await message.send('*_Only bot owner can use this command_*');
-  }
     try {
       const apiUrl = "https://r4bbit-api.vercel.app/api/boobs";
 

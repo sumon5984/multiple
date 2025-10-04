@@ -29,31 +29,52 @@ plugin(
       return await message.send("*_Only bot owner can use this command_*");
     }
 
-    // Uncomment if you want to check bot admin status
-    /*if (!await isBotAdmin(message)) return await message.send('_bot must be admin first_', {
-        linkPreview: linkPreview()
-    })*/
+    // CRITICAL: Check if bot is admin BEFORE attempting any kick
+    const botIsAdmin = await isBotAdmin(message);
+    if (!botIsAdmin) {
+      return await message.send(
+        "_❌ Bot must be an admin to kick members._\n\n*Please make the bot an admin first.*"
+      );
+    }
 
     // Handle "kick all" command
     if (match && match.toLowerCase() === "all") {
-      let totalKicked = await kickAllMembers(message);
-      return await message.send(
-        `✅ Kick All Completed.\n👢 Total kicked: *${totalKicked}*`
-      );
+      try {
+        let totalKicked = await kickAllMembers(message);
+        return await message.send(
+          `✅ Kick All Completed.\n👢 Total kicked: *${totalKicked}*`
+        );
+      } catch (error) {
+        console.error("Kick all error:", error);
+        return await message.send(
+          "_❌ Failed to kick all members. Bot may have lost admin permissions._"
+        );
+      }
     }
 
     let user = null;
 
-    // Priority order: 1. Match parameter, 2. Quoted message, 3. Mentioned users
-    if (match) {
-      // Clean the match and format as WhatsApp ID
-      user = match.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-    } else if (message.quoted && message.quoted.sender) {
+    // Priority order: 1. Reply message, 2. Mentioned users, 3. Match parameter
+    if (message.reply_message && message.reply_message.sender) {
       // If replying to a message
-      user = message.quoted.sender;
+      user = message.reply_message.sender;
     } else if (message.mention && message.mention.length > 0) {
       // If mentioning users
       user = message.mention[0];
+
+      // Ensure proper format
+      if (user && !user.includes("@s.whatsapp.net")) {
+        user = user.split("@")[0] + "@s.whatsapp.net";
+      }
+    } else if (message.mentionedJid && message.mentionedJid.length > 0) {
+      // Alternative mention format
+      user = message.mentionedJid[0];
+    } else if (match) {
+      // Clean the match and format as WhatsApp ID
+      const cleaned = match.replace(/[^0-9]/g, "");
+      if (cleaned.length > 0) {
+        user = cleaned + "@s.whatsapp.net";
+      }
     }
 
     if (!user) {
@@ -62,30 +83,75 @@ plugin(
       );
     }
 
-    // Get non-admin users from the current group
-    // const nonAdmins = await getNonAdmins(message);
-
-    /*if (!nonAdmins.includes(user)) {
-        return await message.send("_❌ Can't kick an admin or bot._");
-    }*/
+    // Check if target is bot itself
+    const botJid = message.client.user.id.split(":")[0] + "@s.whatsapp.net";
+    if (user === botJid) {
+      return await message.send("_❌ I cannot kick myself!_");
+    }
 
     try {
+      // Verify group metadata and user existence
+      const groupMetadata = await message.client.groupMetadata(message.jid);
+
+      // Check if user exists in group - try multiple matching strategies
+      let participant = groupMetadata.participants.find((p) => p.id === user);
+
+      // If not found, try without the @s.whatsapp.net part
+      if (!participant) {
+        const userNumber = user.split("@")[0];
+        participant = groupMetadata.participants.find(
+          (p) => p.id.split("@")[0] === userNumber
+        );
+        if (participant) {
+          user = participant.id; // Use the correct format from group
+        }
+      }
+
+      if (!participant) {
+        return await message.send(
+          `_❌ User @${user.split("@")[0]} is not in this group._`,
+          { mentions: [user] }
+        );
+      }
+
+      // Check if user is an admin
+      if (participant.admin === "admin" || participant.admin === "superadmin") {
+        return await message.send(
+          `_❌ Cannot kick @${user.split("@")[0]} - user is a group admin._`,
+          { mentions: [user] }
+        );
+      }
+
+      // Attempt to kick
       await message.client.groupParticipantsUpdate(
         message.jid,
         [user],
         "remove"
       );
+
       return await message.send(
         `👢 _@${user.split("@")[0]} has been kicked from the group._`,
-        {
-          mentions: [user],
-        }
+        { mentions: [user] }
       );
     } catch (e) {
       console.error("Kick error:", e);
-      return await message.send(
-        "_❌ Failed to kick user. Possible reasons:_\n• User already left the group\n• Bot lacks admin permissions\n• User is an admin\n• Network error"
-      );
+
+      // Handle specific error types
+      if (e.data === 403 || e.output?.statusCode === 403) {
+        return await message.send(
+          "_❌ Access denied. Possible reasons:_\n• Bot is no longer admin\n• Bot was removed from group\n• Group settings restrict kicks"
+        );
+      } else if (e.data === 404) {
+        return await message.send(
+          "_❌ User not found in group or already left._"
+        );
+      } else {
+        return await message.send(
+          `_❌ Failed to kick user._\n\n*Error:* ${
+            e.message || "Unknown error"
+          }\n\n*Possible reasons:*\n• Network issue\n• User already left\n• Bot permissions changed`
+        );
+      }
     }
   }
 );
