@@ -283,6 +283,6 @@ plugin(
     await message.send("_Testing mention message..._");
 
     // Send the mention message
-    await mention(testMsg, mentionData.message);
+    await mention(message, mentionData.message);
   }
 );

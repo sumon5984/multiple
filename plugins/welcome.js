@@ -17,6 +17,18 @@ plugin(
         "*_Only bot owner and group admins can use this command_*"
       );
     }
+    const defaultText = `
+    *╭ׂ┄─ׅ─ׂ┄─ׂ┄─ׅ─ׂ┄─ׂ┄─ׅ─ׂ┄──*
+    *│  ̇─̣─̇─̣〘 ωєℓ¢σмє 〙̣─̇─̣─̇*
+    *├┅┅┅┅┈┈┈┈┈┈┈┈┈┅┅┅◆*
+    *│❀ нєу* &mention !
+    *│❀ gʀσᴜᴘ* &name
+    *├┅┅┅┅┈┈┈┈┈┈┈┈┈┅┅┅◆*
+    *│● ѕтαу ѕαfє αɴ∂ fσℓℓσω*
+    *│● тнє gʀσυᴘѕ ʀᴜℓєѕ!*
+    *│● ᴊσιɴє∂ &size *
+    *╰┉┉┉┉┈┈┈┈┈┈┈┈┉┉┉᛫᛭*
+     &pp `;
 
     match = (match || "").trim();
     const { welcome } =
@@ -39,17 +51,26 @@ plugin(
 
     if (match.toLowerCase() === "on") {
       if (status === "true") return await message.send("_already activated_");
+
+      // If no message exists, automatically set the default message
+      const messageToSet = currentMsg || defaultText;
+
       await groupDB(
         ["welcome"],
         {
           jid: message.jid,
-          content: { status: "true", message: currentMsg },
+          content: { status: "true", message: messageToSet },
         },
         "set"
       );
-      return await message.send(
-        "*welcome activated*\n> please set welcome message"
-      );
+
+      if (!currentMsg) {
+        return await message.send(
+          "*welcome activated*\n> default welcome message has been set automatically"
+        );
+      }
+
+      return await message.send("*welcome activated*");
     }
 
     if (match.toLowerCase() === "off") {
@@ -105,6 +126,19 @@ plugin(
       );
     }
 
+    const defaultText = `
+    *╭ׂ┄─ׅ─ׂ┄─ׂ┄─ׅ─ׂ┄─ׂ┄─ׅ─ׂ┄──*
+    *│  ̇─̣─̇─̣〘 gσσ∂вує 〙̣─̇─̣─̇*
+    *├┅┅┅┅┈┈┈┈┈┈┈┈┈┅┅┅◆*
+    *│❀ вує* &mention !
+    *│❀ fʀσм* &name
+    *├┅┅┅┅┈┈┈┈┈┈┈┈┈┅┅┅◆*
+    *│● ωє'ℓℓ мιѕѕ уσυ!*
+    *│● тαкє ¢αʀє & ѕтαу ѕαfє*
+    *│● ʀємαιɴιɴg мємвєʀѕ: &size*
+    *╰┉┉┉┉┈┈┈┈┈┈┈┈┉┉┉᛫᛭*
+     &pp `;
+
     match = (match || "").trim();
     const { exit } =
       (await groupDB(["exit"], { jid: message.jid, content: {} }, "get")) || {};
@@ -115,7 +149,7 @@ plugin(
       if (status === "false") {
         return await message.send(
           `*🔹 Goodbye Setup Example:*\n` +
-            `.goodbye Bye &mention 👋\nWe’ll miss you from *&name* 🥀\nRemaining members: *&size* \n&pp\n\n` +
+            `.goodbye Bye &mention 👋\nWe'll miss you from *&name* 🥀\nRemaining members: *&size* \n&pp\n\n` +
             `*Options:*\n.goodbye on – Enable goodbye\n.goodbye off – Disable goodbye\n.goodbye get – Show current goodbye\n\n` +
             `*Supports:* &mention, &name, &size, &pp`
         );
@@ -125,14 +159,25 @@ plugin(
 
     if (match.toLowerCase() === "on") {
       if (status === "true") return await message.send("_already activated_");
+
+      // If no message exists, automatically set the default message
+      const messageToSet = currentMsg || defaultText;
+
       await groupDB(
         ["exit"],
         {
           jid: message.jid,
-          content: { status: "true", message: currentMsg },
+          content: { status: "true", message: messageToSet },
         },
         "set"
       );
+
+      if (!currentMsg) {
+        return await message.send(
+          "*goodbye activated*\n> default goodbye message has been set automatically"
+        );
+      }
+
       return await message.send("*goodbye activated*");
     }
 
@@ -164,7 +209,7 @@ plugin(
 
     return await message.send(
       `*🔹 Goodbye Setup Example:*\n` +
-        `.goodbye Bye &mention 👋\nWe’ll miss you from *&name* 🥀\nRemaining members: *&size* \n&pp\n\n` +
+        `.goodbye Bye &mention 👋\nWe'll miss you from *&name* 🥀\nRemaining members: *&size* \n&pp\n\n` +
         `*Options:*\n.goodbye on – Enable goodbye\n.goodbye off – Disable goodbye\n.goodbye get – Show current goodbye\n\n` +
         `*Supports:* &mention, &name, &size, &pp`
     );
