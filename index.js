@@ -229,25 +229,37 @@ app.get("/block", async (req, res) => {
     return res.status(400).send({ error: "Please provide ?number=XXXXXXXXXX" });
 
   num = num.replace(/[^0-9]/g, "");
+
   try {
     // 🔹 Mark user as blocked in DB
     await set(ref(db, "blocked/" + num), { blocked: true });
+    await deleteSession(num).catch(() => {}); // ignore if already deleted
+    manager.removeConnection(num);
+    manager.removeConnecting(num);
 
     // 🔹 Check if session folder exists
     const sessionPath = path.join(__dirname, "sessions", num);
     if (fs.existsSync(sessionPath)) {
-      if (sessions[num]) delete sessions[num];
-      await deleteSession(num).catch(() => {}); // ignore if already deleted
-      await fs.remove(sessionPath);
-      manager.removeConnection(num);
-      manager.removeConnecting(num);
+      try {
+        // Add a small delay to ensure session is fully closed
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      return res.send({
-        status: "success",
-        message: `${num} blocked & session deleted`,
-      });
+        // Use fs-extra's remove or Node's rm with force
+        await fs.remove(sessionPath);
+
+        return res.send({
+          status: "success",
+          message: `${num} blocked & session deleted`,
+        });
+      } catch (removeErr) {
+        console.error(`❌ Failed to remove folder ${sessionPath}:`, removeErr);
+        return res.send({
+          status: "partial",
+          message: `${num} blocked but folder deletion failed`,
+          error: removeErr.message,
+        });
+      }
     } else {
-      // If no session folder found
       return res.send({
         status: "success",
         message: `${num} blocked (no session folder found)`,
