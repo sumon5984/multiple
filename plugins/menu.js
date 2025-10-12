@@ -14,7 +14,7 @@ const runtime = (secs) => {
 
 const readMore = String.fromCharCode(8206).repeat(4001);
 
-const channelJid = "120363421060554246@newsletter";
+const channelJid = "120363400835083687@newsletter";
 const channelName = "© 𝖐𝚊𝚒𝚜𝖊𝖓 𝙼ԃ";
 const serverMessageId = 1;
 
