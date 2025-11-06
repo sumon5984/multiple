@@ -13,6 +13,7 @@ const {
   useMultiFileAuthState,
   Browsers,
   delay,
+  fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore,
   DisconnectReason,
 } = require("@whiskeysockets/baileys");
@@ -45,8 +46,11 @@ async function isBlocked(number) {
 async function connector(Num, res) {
   const sessionDir = path.join(__dirname, "sessions", Num);
   await fs.ensureDir(sessionDir);
+  const { version } = await fetchLatestBaileysVersion();
+   
   var { state, saveCreds } = await useMultiFileAuthState(sessionDir);
   session = makeWASocket({
+    version,
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(
